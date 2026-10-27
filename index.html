@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Makes the installed app look native: colored status bar, full screen, no browser bar -->
+<meta name="theme-color" content="#0b1b36">
+<meta name="description" content="StudyDesk: organize course files, deadlines and weekly reminders.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="StudyDesk">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>StudyDesk – Student Organizer</title>
+
+<!--
+  =====================================================================
+  STUDYDESK – a single-file student organizer
+  =====================================================================
+  HOW THIS FILE IS ORGANIZED
+    1. <style>   – all the looks (colors, spacing, layout)
+    2. <body>    – the empty "shells" of the page (sidebar, views, pop-ups)
+    3. <script>  – all the behavior (folders, files, calendar, alerts)
+
+  EASY TWEAKS (no coding knowledge needed)
+    • Feedback form . paste your Tally link into APP_INFO.TALLY_FORM_URL
+                      (search this file for "PASTE YOUR TALLY LINK HERE")
+    • Contact email . APP_INFO.CONTACT_EMAIL (shown in the Privacy policy)
+    • Colors ........ edit the values at the top of the <style> block
+    • Alert timing .. edit APP_SETTINGS near the top of the <script> block
+    • Weekly to-dos . edit EXTRA_WEEKLY_TASKS in APP_SETTINGS
+    • Week start .... set WEEK_STARTS_ON_MONDAY to true in APP_SETTINGS
+
+  Your data is saved in your browser (localStorage). Nothing is sent
+  anywhere. No internet connection or external libraries are needed.
+  =====================================================================
+-->
+
+<style>
+/* =====================================================================
+   1. COLOR & SIZE SETTINGS
+   Change a color once here and it updates everywhere in the app.
+   ===================================================================== */
+:root {
+  color-scheme: light dark;
+
+  /* Fixed deep blues used by the sidebar and hero card */
+  --navy-900: #0b1b36;
+  --navy-800: #12274a;
+
+  /* Page + card colors (light mode) */
+  --bg: #eef2f7;            /* page background (soft slate) */
+  --surface: #ffffff;       /* card background (crisp white) */
+  --surface-2: #f6f8fb;     /* subtle inner panels */
+  --text: #17233b;          /* main text */
+  --text-muted: #5b6b86;    /* secondary text */
+  --border: #dde4ee;        /* card borders & dividers */
+
+  /* Main action color (buttons, links, focus) */
+  --primary: #2457d6;
+  --on-primary: #ffffff;
+  --primary-soft: #e4ecff;
+  --focus: #2f6fed;
+
+  /* Status colors: danger = urgent, warn = soon, ok = done */
+  --danger: #b4232f;  --danger-bg: #fdecee;  --danger-border: #f4b6bd;
+  --warn: #8a4b00;    --warn-bg: #fff3d4;    --warn-border: #efcf83;
+  --ok: #176b3c;      --ok-bg: #e2f5ea;      --ok-border: #a9dcbd;
+
+  --hero-bg: #12274a;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(15, 35, 70, .06), 0 4px 14px rgba(15, 35, 70, .04);
+
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Dark mode: used automatically when the device is set to dark,
+   unless the user chose "Light" in Settings. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1424;
+    --surface: #131f36;
+    --surface-2: #1a2946;
+    --text: #e8eefb;
+    --text-muted: #96a5c3;
+    --border: #27385c;
+    --primary: #6b9bff;
+    --on-primary: #08142e;
+    --primary-soft: #1c2f58;
+    --focus: #8db0ff;
+    --danger: #ff909b;  --danger-bg: #3a1a25;  --danger-border: #6e2c3b;
+    --warn: #ffc766;    --warn-bg: #3a2d12;    --warn-border: #6d5422;
+    --ok: #75dca0;      --ok-bg: #12341f;      --ok-border: #25603b;
+    --hero-bg: #1b3566;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  }
+}
+
+/* Dark mode forced from Settings ("Dark") */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+    --bg: #0b1424;
+    --surface: #131f36;
+    --surface-2: #1a2946;
+    --text: #e8eefb;
+    --text-muted: #96a5c3;
+    --border: #27385c;
+    --primary: #6b9bff;
+    --on-primary: #08142e;
+    --primary-soft: #1c2f58;
+    --focus: #8db0ff;
+    --danger: #ff909b;  --danger-bg: #3a1a25;  --danger-border: #6e2c3b;
+    --warn: #ffc766;    --warn-bg: #3a2d12;    --warn-border: #6d5422;
+    --ok: #75dca0;      --ok-bg: #12341f;      --ok-border: #25603b;
+    --hero-bg: #1b3566;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+/* =====================================================================
+   2. BASE RESETS – makes every browser start from the same place
+   ===================================================================== */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  overscroll-behavior-y: none;            /* no pull-to-refresh bounce when installed */
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+h1, h2, h3, p { margin: 0; }
+ul { list-style: none; margin: 0; padding: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+input, select { font: inherit; color: inherit; }
+svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Makes the HTML 'hidden' attribute always win (buttons and fields included) */
+[hidden] { display: none !important; }
+
+/* Visible keyboard focus on everything clickable */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* =====================================================================
+   3. PAGE LAYOUT – sidebar on the left, content on the right.
+   On phones the sidebar turns into a bottom tab bar (see section 14).
+   ===================================================================== */
+.app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+
+/* ---- Sidebar (deep blue navigation) ---- */
+.sidebar {
+  background: var(--navy-900);
+  color: #fff;
+  position: sticky; top: 0; height: 100vh;
+  display: flex; flex-direction: column;
+  padding: 22px 14px;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 22px; font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+.brand-mark { width: 32px; height: 32px; border-radius: 9px; background: #2f6fed; display: grid; place-items: center; }
+.brand-mark svg.ic { width: 18px; height: 18px; stroke-width: 2.6; }
+
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav button {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 11px 12px;
+  background: transparent; border: 0; border-radius: 10px;
+  color: #b9c8e6; font-weight: 600; text-align: left;
+}
+.nav button:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+.nav button[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; }
+
+.sidebar-foot { margin-top: auto; padding: 12px 8px 0; font-size: 12.5px; color: #8fa3c9; }
+.sidebar-foot button { margin-top: 10px; background: transparent; border: 1px solid rgba(255,255,255,.25); color: #c9d6ee; border-radius: 8px; padding: 6px 10px; font-size: 12.5px; }
+.sidebar-foot button:hover { background: rgba(255,255,255,.08); }
+
+/* ---- Main content area ---- */
+.main { padding: 28px 34px 60px; max-width: 1320px; width: 100%; }
+
+/* ---- Top bar: page title + quick actions ---- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.topbar h1 { font-size: 26px; line-height: 1.2; font-weight: 750; letter-spacing: -.2px; }
+.topbar .sub { color: var(--text-muted); margin-top: 2px; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+
+/* =====================================================================
+   4. BUTTONS
+   ===================================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 16px; border-radius: 10px; border: 1px solid transparent;
+  background: var(--primary); color: var(--on-primary); font-weight: 650;
+  transition: filter .12s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+.btn-ghost:hover { background: var(--surface-2); filter: none; }
+.btn-danger { background: var(--surface); color: var(--danger); border-color: var(--danger-border); }
+.btn-danger:hover { background: var(--danger-bg); filter: none; }
+.btn-small { padding: 6px 11px; font-size: 13.5px; border-radius: 8px; }
+
+/* Small square icon-only buttons (edit, delete, view…) */
+.icon-btn { width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--text-muted); }
+.icon-btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.icon-btn.danger:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+
+/* Notification bell with a count badge */
+.bell { position: relative; width: 42px; height: 42px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; }
+.bell .count { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #d92d3f; color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+
+/* =====================================================================
+   5. CARDS – the white boxes that hold each section
+   ===================================================================== */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+.card + .card { margin-top: 20px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.card-head h2 { font-size: 17px; font-weight: 700; }
+.card-head .hint { color: var(--text-muted); font-size: 13.5px; }
+.empty { padding: 22px 12px; text-align: center; color: var(--text-muted); background: var(--surface-2); border-radius: 10px; }
+.empty strong { display: block; color: var(--text); margin-bottom: 2px; }
+.empty .btn { margin-top: 12px; }
+
+/* =====================================================================
+   6. ALERT BANNER (top of every page) + ALERT CENTER LIST
+   ===================================================================== */
+.banner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid; margin-bottom: 18px; }
+.banner-danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
+.banner-warn   { background: var(--warn-bg);   border-color: var(--warn-border);   color: var(--warn); }
+.banner-text { flex: 1; min-width: 0; font-weight: 600; }
+.banner-text small { display: block; font-weight: 500; opacity: .9; }
+.banner .btn { background: transparent; color: inherit; border-color: currentColor; }
+
+.alert-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); }
+.alert-row + .alert-row { margin-top: 8px; }
+.alert-dot { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.alert-danger .alert-dot { background: var(--danger-bg); color: var(--danger); }
+.alert-warn   .alert-dot { background: var(--warn-bg);   color: var(--warn); }
+.alert-info   .alert-dot { background: var(--primary-soft); color: var(--primary); }
+.alert-body { flex: 1; min-width: 0; }
+.alert-body strong { display: block; overflow-wrap: anywhere; }
+.alert-body span { color: var(--text-muted); font-size: 14px; }
+.alert-danger .alert-body span { color: var(--danger); font-weight: 600; }
+.alert-warn .alert-body span { color: var(--warn); font-weight: 600; }
+
+/* =====================================================================
+   7. DASHBOARD LAYOUT + "NEXT UP" HERO CARD
+   ===================================================================== */
+.dash { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.dash .card + .card { margin-top: 0; }
+.dash-col { display: grid; gap: 20px; }
+
+.hero { background: var(--hero-bg); color: #fff; border-radius: var(--radius); padding: 24px 24px 22px; position: relative; overflow: hidden; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.hero::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--c, #2f6fed); }
+.hero-when { font-size: 30px; line-height: 1.15; font-weight: 750; letter-spacing: -.4px; }
+.hero-title { margin-top: 6px; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+.hero-meta { margin-top: 2px; color: #b9c8e6; font-size: 14.5px; }
+.hero.is-danger .hero-when { color: #ffb4bc; }
+.hero .btn { background: #fff; color: var(--navy-900); }
+
+/* =====================================================================
+   8. DEADLINE LIST ROWS (used on dashboard and calendar page)
+   ===================================================================== */
+.dl-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border: 1px solid var(--border); border-left: 5px solid var(--c, var(--primary)); border-radius: 10px; background: var(--surface); }
+.dl-row + .dl-row { margin-top: 8px; }
+.dl-title { font-weight: 650; overflow-wrap: anywhere; }
+.dl-row.is-done .dl-title { text-decoration: line-through; color: var(--text-muted); }
+.dl-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+.tag-course { font-size: 12.5px; font-weight: 650; color: var(--text-muted); }
+.dl-due { text-align: right; font-weight: 650; font-size: 14px; white-space: nowrap; }
+.dl-due small { display: block; font-weight: 500; color: var(--text-muted); font-size: 12.5px; }
+.due-danger { color: var(--danger); }
+.due-warn { color: var(--warn); }
+.due-done { color: var(--ok); }
+.row-actions { display: flex; gap: 2px; }
+
+/* Round tick box to mark something done */
+.check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); display: grid; place-items: center; padding: 0; color: #fff; }
+.check:hover { border-color: var(--primary); }
+.check.on { background: var(--ok); border-color: var(--ok); }
+.check svg.ic { width: 14px; height: 14px; stroke-width: 3.2; }
+
+/* Small colored label showing the kind of deadline */
+.badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 20px; border: 1px solid; }
+.type-exam       { color: var(--danger); background: var(--danger-bg); border-color: var(--danger-border); }
+.type-quiz       { color: var(--warn);   background: var(--warn-bg);   border-color: var(--warn-border); }
+.type-assignment { color: var(--primary); background: var(--primary-soft); border-color: transparent; }
+.type-project    { color: var(--ok);     background: var(--ok-bg);     border-color: var(--ok-border); }
+.type-other      { color: var(--text-muted); background: var(--surface-2); border-color: var(--border); }
+
+/* =====================================================================
+   9. WEEKLY CHECKLIST
+   ===================================================================== */
+.progress { height: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 4px 0 14px; }
+.progress > div { height: 100%; background: var(--ok); border-radius: 8px; transition: width .25s; }
+.todo { display: flex; align-items: flex-start; gap: 12px; padding: 10px 4px; border-top: 1px solid var(--border); }
+.todo:first-of-type { border-top: 0; }
+.todo-text { flex: 1; min-width: 0; }
+.todo-text strong { font-weight: 600; display: block; overflow-wrap: anywhere; }
+.todo.is-done .todo-text strong { color: var(--text-muted); text-decoration: line-through; }
+.todo-text span { font-size: 13px; color: var(--text-muted); }
+.todo-text span.ok { color: var(--ok); font-weight: 600; }
+.todo-text span.missing { color: var(--warn); font-weight: 600; }
+.todo .btn { align-self: center; }
+.sec-label { margin: 14px 0 2px; font-size: 13.5px; font-weight: 700; color: var(--text-muted); }
+
+/* Small folder summary list on the dashboard */
+.mini-folder { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); text-align: left; }
+.mini-folder + .mini-folder { margin-top: 8px; }
+.mini-folder:hover { background: var(--surface-2); }
+.mini-folder .name { flex: 1; font-weight: 650; }
+.mini-folder .num { color: var(--text-muted); font-size: 13.5px; }
+.swatch { width: 14px; height: 14px; border-radius: 4px; background: var(--c); flex: none; }
+
+/* =====================================================================
+   10. FILES & FOLDERS PAGE
+   ===================================================================== */
+.files-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
+.files-layout .card + .card { margin-top: 0; }
+
+.folder-item { display: flex; align-items: center; gap: 4px; }
+.folder-item + .folder-item { margin-top: 6px; }
+.folder-pick { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-align: left; }
+.folder-pick:hover { background: var(--surface-2); }
+.folder-pick[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.folder-pick .name { flex: 1; font-weight: 650; overflow-wrap: anywhere; }
+.folder-pick .num { font-size: 13px; color: var(--text-muted); }
+
+/* Drag-and-drop upload box */
+.dropzone { border: 2px dashed var(--border); border-radius: 12px; padding: 26px 16px; text-align: center; background: var(--surface-2); color: var(--text-muted); cursor: pointer; }
+.dropzone:hover, .dropzone.drag-over { border-color: var(--primary); background: var(--primary-soft); color: var(--text); }
+.dropzone svg.ic { width: 28px; height: 28px; color: var(--primary); }
+.dropzone strong { display: block; color: var(--text); margin-top: 6px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.file-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.file-row + .file-row { margin-top: 8px; }
+.file-ext { width: 42px; height: 42px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; font-size: 11.5px; font-weight: 800; flex: none; }
+.file-info { flex: 1; min-width: 0; }
+.file-info strong { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-info span { font-size: 13px; color: var(--text-muted); }
+.folder-title { display: flex; align-items: center; gap: 10px; }
+.folder-title h2 { font-size: 20px; }
+
+/* =====================================================================
+   11. CALENDAR PAGE
+   ===================================================================== */
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.cal-head h2 { font-size: 20px; min-width: 170px; }
+.cal-nav { display: flex; gap: 6px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--border); border-left: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.cal-dow { padding: 8px 6px; text-align: center; font-size: 13px; font-weight: 700; color: var(--text-muted); background: var(--surface-2); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.cell { min-height: 108px; padding: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); cursor: pointer; }
+.cell:hover { background: var(--primary-soft); }
+.cell.other { background: var(--surface-2); color: var(--text-muted); }
+.daynum { display: inline-grid; place-items: center; min-width: 26px; height: 26px; border-radius: 13px; font-size: 13.5px; font-weight: 650; }
+.cell.today .daynum { background: var(--primary); color: var(--on-primary); }
+.chips { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+.chip { display: block; font-size: 12px; line-height: 1.3; padding: 2px 6px; border-radius: 5px; border-left: 3px solid var(--c); background: var(--surface-2); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.cell:hover .chip { background: var(--surface); }
+.chip.is-done { opacity: .55; text-decoration: line-through; }
+.chip.type-exam-chip { font-weight: 700; }
+.more { font-size: 12px; color: var(--text-muted); padding-left: 4px; }
+
+/* =====================================================================
+   12. POP-UP WINDOWS (add deadline, new folder, file viewer, confirm)
+   ===================================================================== */
+dialog { border: 0; border-radius: 16px; padding: 0; width: min(520px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: var(--surface); color: var(--text); box-shadow: 0 20px 60px rgba(5, 15, 40, .45); }
+dialog.wide { width: min(820px, calc(100vw - 24px)); }
+dialog::backdrop { background: rgba(8, 20, 45, .6); }
+.dlg { padding: 22px; }
+.dlg h2 { font-size: 20px; margin-bottom: 14px; }
+.dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+.dlg-actions .spacer { flex: 1; }
+
+.field { display: block; margin-top: 12px; }
+.field > span { display: block; font-weight: 650; font-size: 14px; margin-bottom: 4px; }
+.field input, .field select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.field input:focus, .field select:focus { border-color: var(--primary); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.error-text { color: var(--danger); font-weight: 600; font-size: 14px; margin-top: 6px; min-height: 0; }
+
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.swatches label { cursor: pointer; }
+.swatches input { position: absolute; opacity: 0; pointer-events: none; }
+.swatches .dot { display: block; width: 32px; height: 32px; border-radius: 50%; background: var(--c); border: 3px solid transparent; box-shadow: inset 0 0 0 2px var(--surface); }
+.swatches input:checked + .dot { border-color: var(--text); }
+.swatches input:focus-visible + .dot { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.day-list { margin-top: 4px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); font-size: 14px; }
+.day-list strong { display: block; margin-bottom: 4px; }
+.day-list li + li { margin-top: 2px; }
+
+.viewer-body { margin-top: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); max-height: 60vh; overflow: auto; }
+.viewer-body img { display: block; max-width: 100%; margin: 0 auto; }
+.viewer-body iframe { width: 100%; height: 60vh; border: 0; }
+.viewer-body pre { margin: 0; padding: 14px; white-space: pre-wrap; word-break: break-word; font-size: 13.5px; }
+.viewer-note { padding: 22px; text-align: center; color: var(--text-muted); }
+
+/* Small message that pops up at the bottom after an action */
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: var(--navy-900); color: #fff; padding: 10px 18px; border-radius: 10px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; max-width: calc(100vw - 32px); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* =====================================================================
+   12b. VIEW-DEADLINE POP-UP, TAPPABLE ROWS, INSTALL POP-UP
+   ===================================================================== */
+/* Rows you can tap to open the read-only view */
+.dl-row[data-action], .alert-row[data-action] { cursor: pointer; }
+.dl-row[data-action]:hover, .alert-row[data-action]:hover { background: var(--surface-2); }
+
+/* Read-only deadline details */
+.view-dl { border-left: 6px solid var(--c, var(--primary)); }
+.vd-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.vd-title { font-size: 22px !important; line-height: 1.25; margin-bottom: 4px !important; overflow-wrap: anywhere; }
+.vd-when { font-weight: 700; font-size: 16px; margin-bottom: 14px; }
+.vd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin: 0; padding: 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+.vd-grid dt { font-size: 13px; color: var(--text-muted); }
+.vd-grid dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+
+/* Install pop-up */
+.install-steps { margin: 10px 0 0; padding-left: 20px; color: var(--text-muted); }
+.install-steps li { margin-top: 6px; }
+.install-hero { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.install-hero img { width: 56px; height: 56px; border-radius: 14px; }
+.install-hero h2 { margin: 0 !important; }
+
+/* =====================================================================
+   12d. NESTED FOLDERS (indented tree, breadcrumbs, subfolder tiles)
+   ===================================================================== */
+/* Each level of subfolder is pushed in by 18px (the --depth number is set in JavaScript) */
+/* ---- MAIN folders vs SUBFOLDERS: they now look clearly different ----
+   MAIN folder = raised card, solid colored folder tile, bold larger name, count pill
+   SUBFOLDER   = flat and smaller, indented under a colored guide line, outline icon */
+.folder-tree .folder-item.is-main { margin-top: 14px; }
+.folder-tree .folder-item.is-main:first-child { margin-top: 0; }
+.folder-tree .folder-item.is-sub { margin-top: 2px; margin-left: calc(var(--depth, 1) * 14px); padding-left: 8px; border-left: 3px solid var(--c); border-radius: 2px; }
+.is-main .folder-pick { padding: 11px 12px; border-radius: 12px; box-shadow: var(--shadow); }
+.is-main .folder-pick .name { font-size: 16px; font-weight: 750; }
+.is-main .folder-pick .num { background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 0 9px; font-weight: 650; color: var(--text); }
+.is-sub .folder-pick { padding: 7px 8px; gap: 8px; border: 0; border-radius: 8px; background: transparent; }
+.is-sub .folder-pick:hover { background: var(--surface-2); }
+.is-sub .folder-pick[aria-pressed="true"] { background: var(--primary-soft); }
+.is-sub .folder-pick .name { font-size: 14.5px; font-weight: 550; }
+.is-sub .icon-btn { width: 30px; height: 30px; }
+.fold-tile { width: 30px; height: 30px; border-radius: 9px; background: var(--c); color: #fff; display: grid; place-items: center; flex: none; }
+.fold-tile.sm { width: 26px; height: 26px; border-radius: 8px; }
+.fold-tile.big { width: 44px; height: 44px; border-radius: 12px; }
+.fold-tile.big svg.ic { width: 22px; height: 22px; }
+.fold-mini { color: var(--c); display: grid; place-items: center; flex: none; }
+.fold-mini svg.ic { width: 17px; height: 17px; }
+.folder-title.is-sub h2 { font-size: 17px; }
+.folder-title .kind { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.subfolder svg.ic { color: var(--c); }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-bottom: 10px; font-size: 14px; }
+.crumb { background: none; border: 0; padding: 3px 6px; color: var(--primary); font-weight: 650; border-radius: 6px; }
+.crumb:hover { background: var(--primary-soft); }
+.crumb-current { font-weight: 750; padding: 3px 6px; overflow-wrap: anywhere; }
+.crumbs .sep { color: var(--text-muted); }
+.sub-label { font-size: 13.5px; font-weight: 700; color: var(--text-muted); margin: 0 0 8px; }
+.subfolders { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.subfolder { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-left: 5px solid var(--c); border-radius: 10px; background: var(--surface); text-align: left; }
+.subfolder:hover { background: var(--surface-2); }
+.subfolder .name { flex: 1; min-width: 0; font-weight: 650; overflow-wrap: anywhere; }
+.subfolder .num { font-size: 13px; color: var(--text-muted); }
+.card-head .head-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* =====================================================================
+   12c. SETTINGS PAGE (tabs, setting rows, privacy text, feedback frame)
+   ===================================================================== */
+.settings-wrap { max-width: 780px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 14px; background: transparent; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; font-weight: 650; color: var(--text-muted); white-space: nowrap; }
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-top: 1px solid var(--border); }
+.card-head + .set-row { border-top: 0; }
+.set-text { min-width: 0; }
+.set-text strong { display: block; font-weight: 650; }
+.set-text span { display: block; color: var(--text-muted); font-size: 13.5px; }
+.set-ctl { flex: none; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.set-ctl select, .set-ctl input[type="time"], .set-ctl input[type="text"] { padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); min-width: 150px; }
+.set-row.stack { flex-direction: column; align-items: stretch; }
+.set-row.stack .set-ctl { flex: auto; justify-content: stretch; }
+.set-row.stack textarea { width: 100%; min-height: 120px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); font: inherit; color: inherit; resize: vertical; }
+
+.prose h3 { font-size: 16px; margin: 20px 0 4px; }
+.prose h3:first-of-type { margin-top: 6px; }
+.prose p, .prose li { color: var(--text-muted); max-width: 70ch; }
+.prose ul { list-style: disc; padding-left: 22px; margin: 6px 0 0; }
+.prose li + li { margin-top: 4px; }
+.prose a { color: var(--primary); }
+.prose .lead { color: var(--text); font-size: 16px; font-weight: 600; }
+.frame { display: block; width: 100%; height: 680px; border: 0; border-radius: 10px; background: var(--surface-2); margin-top: 12px; }
+
+@media (max-width: 640px) {
+  .set-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .set-ctl { justify-content: stretch; }
+  .set-ctl select, .set-ctl input[type="time"], .set-ctl input[type="text"] { width: 100%; }
+}
+
+/* =====================================================================
+   13. REDUCED MOTION – respect people who turn animations off
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* =====================================================================
+   14. RESPONSIVE – tablets and phones
+   ===================================================================== */
+@media (max-width: 1000px) {
+  .dash, .files-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 820px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  /* Sidebar becomes a bottom tab bar */
+  .sidebar { position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; flex-direction: row; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); z-index: 30; box-shadow: 0 -4px 18px rgba(5, 15, 40, .25); }
+  .brand, .sidebar-foot { display: none; }
+  .nav { flex-direction: row; width: 100%; gap: 6px; }
+  .nav button { flex: 1; flex-direction: column; gap: 2px; padding: 7px 4px; font-size: 12.5px; text-align: center; }
+  .main { padding: calc(18px + env(safe-area-inset-top)) 14px 100px; }
+  .topbar h1 { font-size: 22px; }
+  .toast { bottom: 90px; }
+}
+
+@media (max-width: 640px) {
+  /* Deadline rows stack so long titles stay readable */
+  .dl-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .dl-due { grid-column: 2 / 3; text-align: left; white-space: normal; }
+  .dl-due small { display: inline; margin-left: 6px; }
+  .row-actions { grid-column: 3 / 4; grid-row: 1 / 3; flex-direction: column; }
+  .hero-when { font-size: 26px; }
+
+  /* Calendar chips shrink to colored dots; full details are in the list below */
+  .cell { min-height: 58px; padding: 4px 2px; text-align: center; }
+  .chips { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 3px; }
+  .chip { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 50%; background: var(--c); font-size: 0; }
+  .more { font-size: 11px; padding: 0; }
+  .field-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =====================================================================
+     APP SHELL: sidebar navigation + main content area
+     ===================================================================== -->
+<div class="app">
+
+  <!-- Sidebar / bottom tab bar. Buttons use data-action="nav" to switch pages -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark" id="brandMark"></span>
+      <span>StudyDesk</span>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <button data-action="nav" data-view="dashboard" id="nav-dashboard"></button>
+      <button data-action="nav" data-view="files" id="nav-files"></button>
+      <button data-action="nav" data-view="calendar" id="nav-calendar"></button>
+      <button data-action="nav" data-view="settings" id="nav-settings"></button>
+    </nav>
+    <div class="sidebar-foot">
+      <div id="storageNote">Saved in this browser only.</div>
+      <button data-action="reset-all">Clear all data</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+
+    <!-- Page title, today's date, bell and "Add deadline" button -->
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p class="sub" id="pageSub"></p>
+      </div>
+      <div class="top-actions">
+        <button class="btn btn-ghost btn-small" data-action="install-app" id="installBtn" hidden></button>
+        <button class="bell" data-action="go-alerts" id="bellBtn" aria-label="Alerts"></button>
+        <button class="btn" data-action="add-deadline" id="addDeadlineBtn"></button>
+      </div>
+    </header>
+
+    <!-- Urgent-deadline banner (filled in by JavaScript) -->
+    <div id="bannerArea" aria-live="polite"></div>
+
+    <!-- ============ VIEW 1: DASHBOARD ============ -->
+    <section class="view" id="view-dashboard">
+      <div class="dash">
+        <div class="dash-col">
+          <div id="heroArea"></div>
+          <div class="card" id="alertCard"></div>
+          <div class="card" id="upcomingCard"></div>
+        </div>
+        <div class="dash-col">
+          <div class="card" id="checklistCard"></div>
+          <div class="card" id="folderSummaryCard"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW 2: FILES & FOLDERS ============ -->
+    <section class="view" id="view-files" hidden>
+      <div class="files-layout">
+        <div class="card" id="folderListCard"></div>
+        <div class="card" id="folderDetailCard"></div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW 3: CALENDAR ============ -->
+    <section class="view" id="view-calendar" hidden>
+      <div class="card" id="calendarCard"></div>
+      <div class="card" id="monthListCard"></div>
+    </section>
+
+    <!-- ============ VIEW 4: SETTINGS, FEEDBACK, PRIVACY ============ -->
+    <section class="view" id="view-settings" hidden>
+      <div id="settingsArea"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Hidden file picker used by the upload box (kept outside the box on purpose) -->
+<input type="file" id="fileInput" class="visually-hidden" multiple tabindex="-1" aria-hidden="true">
+<!-- Hidden picker used by Settings > Import backup -->
+<input type="file" id="importInput" class="visually-hidden" accept="application/json,.json" tabindex="-1" aria-hidden="true">
+
+<!-- Short confirmation message -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- =====================================================================
+     POP-UP: ADD / EDIT DEADLINE
+     ===================================================================== -->
+<dialog id="deadlineDialog" aria-labelledby="deadlineDlgTitle">
+  <form class="dlg" id="deadlineForm" novalidate>
+    <h2 id="deadlineDlgTitle">Add deadline</h2>
+    <div id="dayList"></div>
+
+    <label class="field"><span>Title</span>
+      <input type="text" id="dlTitle" maxlength="120" placeholder="e.g. Homework 3" required>
+    </label>
+    <div class="field-row">
+      <label class="field"><span>Course</span>
+        <select id="dlCourse"></select>
+      </label>
+      <label class="field"><span>Type</span>
+        <select id="dlType"></select>
+      </label>
+    </div>
+    <div class="field-row">
+      <label class="field"><span>Due date</span>
+        <input type="date" id="dlDate" required>
+      </label>
+      <label class="field"><span>Time</span>
+        <input type="time" id="dlTime">
+      </label>
+    </div>
+    <p class="error-text" id="dlError" role="alert"></p>
+
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-danger" id="dlDeleteBtn" data-action="delete-from-modal" hidden>Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">Cancel</button>
+      <button type="submit" class="btn">Save deadline</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- =====================================================================
+     POP-UP: NEW FOLDER
+     ===================================================================== -->
+<dialog id="folderDialog" aria-labelledby="folderDlgTitle">
+  <form class="dlg" id="folderForm" novalidate>
+    <h2 id="folderDlgTitle">New main folder</h2>
+    <label class="field"><span>Where should it go?</span>
+      <select id="folderParent"></select>
+    </label>
+    <label class="field"><span>Folder name</span>
+      <input type="text" id="folderName" maxlength="40" placeholder="e.g. CICS 111" required>
+    </label>
+    <div class="field" id="folderColorField"><span>Color</span>
+      <div class="swatches" id="folderColors"></div>
+    </div>
+    <p class="error-text" id="folderError" role="alert"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">Cancel</button>
+      <button type="submit" class="btn">Create folder</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- =====================================================================
+     POP-UP: FILE VIEWER
+     ===================================================================== -->
+<dialog id="viewerDialog" class="wide" aria-labelledby="viewerTitle">
+  <div class="dlg">
+    <h2 id="viewerTitle">File</h2>
+    <div id="viewerMeta" class="sub" style="color:var(--text-muted)"></div>
+    <div class="viewer-body" id="viewerBody"></div>
+    <div class="dlg-actions">
+      <span id="viewerDownload"></span>
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- =====================================================================
+     POP-UP: CONFIRM (used before deleting anything)
+     ===================================================================== -->
+<dialog id="confirmDialog" aria-labelledby="confirmTitle">
+  <div class="dlg">
+    <h2 id="confirmTitle">Are you sure?</h2>
+    <p id="confirmMsg" style="color:var(--text-muted)"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+
+<!-- =====================================================================
+     POP-UP: VIEW DEADLINE (read-only; use Edit inside to change it)
+     ===================================================================== -->
+<dialog id="viewDialog" aria-labelledby="vdTitle">
+  <div id="viewDlBody"></div>
+</dialog>
+
+<!-- =====================================================================
+     POP-UP: INSTALL THE APP (filled in by JavaScript)
+     ===================================================================== -->
+<dialog id="installDialog" aria-labelledby="installTitle">
+  <div class="dlg" id="installBody"></div>
+</dialog>
+
+<!-- =====================================================================
+     POP-UP: WELCOME (asks for the student's name on first open)
+     ===================================================================== -->
+<dialog id="welcomeDialog" aria-labelledby="welcomeTitle">
+  <form class="dlg" id="welcomeForm" novalidate>
+    <div class="install-hero"><img alt="" id="welcomeIcon" src=""><h2 id="welcomeTitle">Welcome to StudyDesk</h2></div>
+    <p style="color:var(--text-muted)">Let’s get you set up. What should we call you?</p>
+    <label class="field"><span>Your name</span>
+      <input type="text" id="welcomeName" maxlength="40" autocomplete="given-name" placeholder="e.g. Akua">
+    </label>
+    <p class="error-text" id="welcomeError" role="alert"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost" data-action="skip-name">Skip for now</button>
+      <button type="submit" class="btn">Get started</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* =====================================================================
+   A. APP SETTINGS – the easy-to-edit options live here
+   ===================================================================== */
+const APP_SETTINGS = {
+  // A deadline this many days away (or fewer) shows a RED "urgent" alert.
+  URGENT_DAYS: 2,
+  // A deadline this many days away (or fewer) shows an AMBER "coming up" alert.
+  SOON_DAYS: 7,
+  // false = calendar weeks start on Sunday, true = on Monday.
+  WEEK_STARTS_ON_MONDAY: false,
+  // Time pre-filled in the deadline form (24-hour format, HH:MM).
+  DEFAULT_DUE_TIME: '23:59',
+  // Files up to this size are kept after you close the page (the rest are
+  // remembered by name only). Browsers allow roughly 5 MB of storage in total.
+  MAX_STORED_FILE_BYTES: 300 * 1024,
+  // Extra items that appear on the weekly checklist. Add or remove lines freely.
+  EXTRA_WEEKLY_TASKS: [
+    'Check each syllabus for new deadlines',
+    'Review next week\u2019s calendar',
+    'Back up important files'
+  ],
+  // The kinds of deadline you can pick in the form.
+  DEADLINE_TYPES: ['Assignment', 'Quiz', 'Exam', 'Project', 'Other'],
+  // How many folder levels are allowed (4 = main folder + 3 levels of subfolders).
+  MAX_FOLDER_DEPTH: 4,
+  // Folder colors to choose from (also used to color-code the calendar).
+  FOLDER_COLORS: ['#2f6fed', '#0ea5a4', '#8b5cf6', '#e0731f', '#d6336c', '#4d9a2f']
+};
+
+/* =====================================================================
+   A2. APP INFO – name, version, feedback form, contact details
+   ===================================================================== */
+const APP_INFO = {
+  NAME: 'StudyDesk',
+  VERSION: '1.1.0',
+
+  /* ------------------------------------------------------------------
+     HOW TO CONNECT YOUR TALLY FEEDBACK FORM
+       1. Go to tally.so and create your form (e.g. name, email,
+          "What can we improve?").
+       2. Click Publish, then Share, and copy the link.
+          It looks like:  https://tally.so/r/abc123
+       3. Paste that link between the quotes on the next line.
+     The app turns it into an embedded form on Settings > Feedback
+     automatically, and adds an "Open in a new tab" button too.
+     Leave it empty ('') and the Feedback tab shows
+     "not connected yet" instead.
+     ------------------------------------------------------------------ */
+  TALLY_FORM_URL: '',   // <-- PASTE YOUR TALLY LINK HERE
+
+  /* Optional: a contact email shown in the Privacy policy and Feedback tab. */
+  CONTACT_EMAIL: '',    // <-- e.g. 'hello@yourdomain.com'
+
+  /* Update this date whenever you change the Privacy policy text. */
+  PRIVACY_UPDATED: 'October 26, 2026'
+};
+
+/* The starting values for every option on the Settings page.
+   (Copied from APP_SETTINGS above, so edit those to change the defaults.) */
+const DEFAULT_SETTINGS = {
+  name: '',                                          // the student's name, used in the greeting
+  askedName: false,                                  // true once the welcome question has been answered or skipped
+  theme: 'system',                                   // 'system' | 'light' | 'dark'
+  urgentDays: APP_SETTINGS.URGENT_DAYS,
+  soonDays: APP_SETTINGS.SOON_DAYS,
+  weekStartsMonday: APP_SETTINGS.WEEK_STARTS_ON_MONDAY,
+  defaultTime: APP_SETTINGS.DEFAULT_DUE_TIME,
+  extraTasks: APP_SETTINGS.EXTRA_WEEKLY_TASKS.slice()
+};
+
+/* The key the browser uses to store your data. Change it to start fresh. */
+const STORAGE_KEY = 'studydesk.v1';
+
+
+/* =====================================================================
+   B. APP STATE – everything the app remembers
+   ===================================================================== */
+let state = emptyState();          // folders, files, deadlines, checklist ticks
+const runtimeFiles = {};           // real File objects for this session (fileId -> File)
+const blobUrls = {};               // temporary preview links (fileId -> url)
+let memoryStore = null;            // fallback if the browser blocks localStorage
+let storageWorks = true;           // flips to false if localStorage is blocked
+let toastTimer = null;             // timer that hides the toast message
+let confirmCallback = null;        // what to do when "Delete" is pressed in confirm pop-up
+
+/* Things that only matter while the page is open (not saved) */
+const ui = {
+  view: 'dashboard',
+  folderId: null,                                   // folder open on the Files page
+  cal: { y: new Date().getFullYear(), m: new Date().getMonth() },  // month shown in calendar
+  dismissed: new Set(),                             // banners the user closed
+  editingId: null,                                  // deadline being edited (or null)
+  viewingId: null,                                  // deadline shown in the read-only pop-up
+  settingsTab: 'settings'                           // 'settings' | 'feedback' | 'privacy'
+};
+
+/* Creates a blank data object. */
+function emptyState() {
+  return { v: 1, folders: [], files: [], deadlines: [], checklist: {}, settings: Object.assign({}, DEFAULT_SETTINGS) };
+}
+
+
+/* =====================================================================
+   C. SMALL HELPER FUNCTIONS
+   ===================================================================== */
+
+/* Shortcut for document.getElementById. */
+function $(id) { return document.getElementById(id); }
+
+/* Makes a short random ID for new folders, files and deadlines. */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* Makes user-typed text safe to place inside HTML (prevents broken layout / injection). */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/* Adds a leading zero: 5 -> "05". */
+function pad(n) { return String(n).padStart(2, '0'); }
+
+/* Turns a Date into "YYYY-MM-DD" (local time). */
+function toDateStr(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+/* Turns "YYYY-MM-DD" back into a Date at midnight (local time). */
+function parseDateStr(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+
+/* Today's date as "YYYY-MM-DD". */
+function todayStr() { return toDateStr(new Date()); }
+
+/* How many calendar days from one date string to another (negative = in the past). */
+function dayDiff(fromStr, toStr) {
+  return Math.round((parseDateStr(toStr) - parseDateStr(fromStr)) / 86400000);
+}
+
+/* Returns the Monday of the week that contains a date, as "YYYY-MM-DD".
+   The weekly checklist resets every Monday. */
+function weekStartStr(date) {
+  const d = new Date(date);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return toDateStr(d);
+}
+
+/* "23:59" -> "11:59 PM". Returns "" when there is no time. */
+function formatTime(t) {
+  if (!t) return '';
+  const p = t.split(':').map(Number);
+  const h12 = p[0] % 12 === 0 ? 12 : p[0] % 12;
+  return h12 + ':' + pad(p[1]) + ' ' + (p[0] < 12 ? 'AM' : 'PM');
+}
+
+/* "2026-10-30" -> "Fri, Oct 30". */
+function formatDate(s) {
+  return parseDateStr(s).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+/* 1536000 -> "1.5 MB". */
+function formatSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return Math.round(b / 1024) + ' KB';
+  return (b / 1048576).toFixed(1) + ' MB';
+}
+
+/* Gives the short extension shown on a file tile: "lecture.pdf" -> "PDF". */
+function fileExt(name) {
+  return name.indexOf('.') > -1 ? name.split('.').pop().slice(0, 4).toUpperCase() : 'FILE';
+}
+
+/* Finds a folder by its ID (or undefined). */
+function folderById(id) { return state.folders.find(function (f) { return f.id === id; }); }
+
+/* ---- Folder tree helpers: main folders have no parentId; subfolders point to their parent ---- */
+
+/* Folders directly inside a parent ('' = the main, top-level folders). */
+function childFolders(parentId) {
+  return state.folders.filter(function (f) { return (f.parentId || '') === (parentId || ''); });
+}
+
+/* The main (top-level) folders. These act as your courses. */
+function rootFolders() { return childFolders(''); }
+
+/* Climbs up to the main folder that contains a folder. */
+function rootOf(id) {
+  let f = folderById(id), guard = 0;
+  while (f && f.parentId && guard++ < 20) {
+    const p = folderById(f.parentId);
+    if (!p) break;
+    f = p;
+  }
+  return f;
+}
+
+/* How deep a folder is: 0 = main folder, 1 = subfolder, 2 = sub-subfolder... */
+function folderDepth(id) {
+  let d = 0, f = folderById(id);
+  while (f && f.parentId && d < 20) { f = folderById(f.parentId); d++; }
+  return d;
+}
+
+/* A folder's id plus the ids of everything inside it, at any depth. */
+function descendantIds(id) {
+  let out = [id];
+  childFolders(id).forEach(function (c) { out = out.concat(descendantIds(c.id)); });
+  return out;
+}
+
+/* Readable location, e.g. "CICS 111 / Lectures / Week 3". */
+function folderPath(id) {
+  const parts = [];
+  let f = folderById(id), g = 0;
+  while (f && g++ < 20) { parts.unshift(f.name); f = f.parentId ? folderById(f.parentId) : null; }
+  return parts.join(' / ');
+}
+
+/* Number of files in a folder including all its subfolders. */
+function fileCountDeep(id) {
+  const ids = descendantIds(id);
+  return state.files.filter(function (x) { return ids.indexOf(x.folderId) > -1; }).length;
+}
+
+/* The course name to display for a deadline. */
+function courseName(id) { const f = folderById(id); return f ? f.name : 'General'; }
+
+/* The color to display for a deadline's course. */
+function courseColor(id) { const f = rootOf(id); return f ? f.color : '#64748b'; }
+
+/* Draws a small inline icon (no external icon library needed). */
+function icon(name) {
+  const paths = {
+    home: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',
+    folder: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+    calendar: 'M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18M8 2v4M16 2v4',
+    bell: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0',
+    check: 'M20 6L9 17l-5-5',
+    trash: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6',
+    eye: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+    upload: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12',
+    sliders: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
+    download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
+    plus: 'M12 5v14M5 12h14',
+    left: 'M15 18l-6-6 6-6',
+    right: 'M9 18l6-6-6-6',
+    x: 'M18 6L6 18M6 6l12 12',
+    edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+    alert: 'M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+    clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
+    book: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5'
+  };
+  return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="' + (paths[name] || '') + '"/></svg>';
+}
+
+/* Shows a short message at the bottom of the screen. */
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2600);
+}
+
+
+/* =====================================================================
+   D. SAVING & LOADING DATA (browser storage)
+   ===================================================================== */
+
+/* Saves everything. Returns true on success, false if the browser refused. */
+function saveState() {
+  const json = JSON.stringify(state);
+  try {
+    localStorage.setItem(STORAGE_KEY, json);
+    return true;
+  } catch (e) {
+    memoryStore = json;   // keep working for this session even if saving is blocked
+    storageWorks = false;
+    return false;
+  }
+}
+
+/* Loads saved data. Returns the data, or null if nothing was saved yet. */
+function loadState() {
+  let raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { storageWorks = false; }
+  if (!raw) return null;
+  try {
+    return normalizeState(JSON.parse(raw));
+  } catch (e) { return null; }
+}
+
+/* Cleans up loaded or imported data so missing or odd values can't break the app.
+   Anything that isn't the expected shape is dropped or replaced with a safe default. */
+function normalizeState(data) {
+  const st = emptyState();
+  if (!data || typeof data !== 'object') return st;
+  const folders = (Array.isArray(data.folders) ? data.folders : []).filter(function (f) { return f && typeof f.id === 'string' && typeof f.name === 'string'; })
+    .map(function (f) { return { id: f.id, name: f.name, parentId: typeof f.parentId === 'string' ? f.parentId : '', color: APP_SETTINGS.FOLDER_COLORS.indexOf(f.color) > -1 ? f.color : APP_SETTINGS.FOLDER_COLORS[0] }; });
+  /* Make sure every parent exists and no folder is inside itself (older saves had no parents) */
+  const ids = {};
+  folders.forEach(function (f) { ids[f.id] = f; });
+  folders.forEach(function (f) { if (f.parentId && (!ids[f.parentId] || f.parentId === f.id)) f.parentId = ''; });
+  folders.forEach(function (f) {
+    let cur = f, steps = 0;
+    while (cur && cur.parentId && steps < 50) { cur = ids[cur.parentId]; steps++; }
+    if (steps >= 50) f.parentId = '';
+  });
+  st.folders = folders;
+  st.files = (Array.isArray(data.files) ? data.files : []).filter(function (f) { return f && typeof f.id === 'string' && typeof f.name === 'string' && typeof f.folderId === 'string'; })
+    .map(function (f) { return { id: f.id, folderId: f.folderId, name: f.name, size: Number(f.size) || 0, type: String(f.type || ''), added: typeof f.added === 'string' ? f.added : new Date().toISOString(), data: typeof f.data === 'string' && f.data.indexOf('data:') === 0 ? f.data : undefined }; });
+  st.files = st.files.filter(function (f) { return !!ids[f.folderId]; });   // drop files whose folder is gone
+  st.deadlines = (Array.isArray(data.deadlines) ? data.deadlines : []).filter(function (d) { return d && typeof d.id === 'string' && typeof d.title === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.date || ''); })
+    .map(function (d) { return { id: d.id, title: d.title, course: String(d.course || ''), type: String(d.type || 'Other'), date: d.date, time: /^\d{2}:\d{2}$/.test(d.time || '') ? d.time : '', done: !!d.done }; });
+  st.checklist = (data.checklist && typeof data.checklist === 'object') ? data.checklist : {};
+  const set = Object.assign({}, DEFAULT_SETTINGS, data.settings || {});
+  if (['system', 'light', 'dark'].indexOf(set.theme) === -1) set.theme = 'system';
+  set.name = typeof set.name === 'string' ? set.name.trim().slice(0, 40) : '';
+  set.askedName = !!set.askedName;
+  if (!Array.isArray(set.extraTasks)) set.extraTasks = DEFAULT_SETTINGS.extraTasks.slice();
+  st.settings = set;
+  return st;
+}
+
+/* =====================================================================
+   E. DEADLINE LOGIC – sorting, countdowns, and alerts
+   ===================================================================== */
+
+/* Returns all deadlines sorted by date, then time. */
+function sortedDeadlines() {
+  return state.deadlines.slice().sort(function (a, b) {
+    return (a.date + (a.time || '23:59')).localeCompare(b.date + (b.time || '23:59'));
+  });
+}
+
+/* Deadlines that fall on one specific day. */
+function deadlinesOn(dateStr) {
+  return sortedDeadlines().filter(function (d) { return d.date === dateStr; });
+}
+
+/* Works out how urgent a deadline is. Returns:
+   diff    – whole days until due (negative = past)
+   overdue – true if the due time has already passed
+   level   – 'done' | 'danger' | 'warn' | 'calm'
+   label   – friendly text like "Due in 2 days"        */
+function dueInfo(d) {
+  const diff = dayDiff(todayStr(), d.date);
+  const at = d.time ? ' at ' + formatTime(d.time) : '';
+  let overdue = diff < 0;
+  if (diff === 0 && d.time) {
+    const due = parseDateStr(d.date);
+    const p = d.time.split(':').map(Number);
+    due.setHours(p[0], p[1], 0, 0);
+    overdue = new Date() > due;
+  }
+  if (d.done) return { diff: diff, overdue: false, level: 'done', label: 'Completed' };
+  if (overdue) {
+    const label = diff < 0 ? 'Overdue by ' + (-diff) + (diff === -1 ? ' day' : ' days') : 'Overdue' + at;
+    return { diff: diff, overdue: true, level: 'danger', label: label };
+  }
+  let label;
+  if (diff === 0) label = 'Due today' + at;
+  else if (diff === 1) label = 'Due tomorrow' + at;
+  else label = 'Due in ' + diff + ' days';
+  const level = diff <= APP_SETTINGS.URGENT_DAYS ? 'danger' : (diff <= APP_SETTINGS.SOON_DAYS ? 'warn' : 'calm');
+  return { diff: diff, overdue: false, level: level, label: label };
+}
+
+/* Counts files added to a folder during the current week. */
+function filesThisWeek(folderId) {
+  const wk = weekStartStr(new Date());
+  const ids = descendantIds(folderId);   // includes files in all subfolders
+  return state.files.filter(function (f) {
+    return ids.indexOf(f.folderId) > -1 && weekStartStr(new Date(f.added)) === wk;
+  }).length;
+}
+
+/* Is a weekly checklist item ticked for the current week? */
+function isChecked(key) {
+  const wk = state.checklist[weekStartStr(new Date())];
+  return !!(wk && wk[key]);
+}
+
+/* Builds the list of alerts: urgent deadlines, upcoming deadlines, and
+   "you haven't uploaded this week's slides" reminders. */
+function buildAlerts() {
+  const out = [];
+  state.deadlines.forEach(function (d) {
+    if (d.done) return;
+    const info = dueInfo(d);
+    if (info.level !== 'danger' && info.level !== 'warn') return;
+    out.push({
+      id: 'dl:' + d.id + ':' + info.level,
+      level: info.level,
+      rank: info.overdue ? -1000 + info.diff : info.diff,   // most urgent first
+      title: d.title,
+      course: courseName(d.course),
+      message: info.label + (info.level === 'danger' ? '!' : ''),
+      deadlineId: d.id
+    });
+  });
+  out.sort(function (a, b) { return a.rank - b.rank; });
+
+  const wk = weekStartStr(new Date());
+  rootFolders().forEach(function (f) {
+    if (filesThisWeek(f.id) === 0 && !isChecked('slides:' + f.id)) {
+      out.push({
+        id: 'slides:' + f.id + ':' + wk,
+        level: 'info',
+        rank: 9999,
+        title: 'No ' + f.name + ' files uploaded this week',
+        course: f.name,
+        message: 'Have you added this week\u2019s lecture slides?',
+        folderId: f.id
+      });
+    }
+  });
+  return out;
+}
+
+
+/* =====================================================================
+   F. PAGE SWITCHING & HEADER
+   ===================================================================== */
+
+/* Shows one of the three pages ('dashboard', 'files', 'calendar'). */
+function showView(name) {
+  ui.view = name;
+  ['dashboard', 'files', 'calendar', 'settings'].forEach(function (v) {
+    $('view-' + v).hidden = (v !== name);
+    $('nav-' + v).setAttribute('aria-current', v === name ? 'page' : 'false');
+  });
+  renderAll();
+  window.scrollTo(0, 0);
+}
+
+/* Updates the page title and date line at the top. */
+function renderHeader() {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+  const who = state.settings.name ? ', ' + state.settings.name : '';
+  const titles = { dashboard: greeting + who, files: 'Files and folders', calendar: 'Study calendar', settings: 'Settings' };
+  $('pageTitle').textContent = titles[ui.view];
+  $('pageSub').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+/* Fills in the sidebar buttons and the bell with their icons and labels. */
+function renderChrome() {
+  $('brandMark').innerHTML = icon('check');
+  $('nav-dashboard').innerHTML = icon('home') + '<span>Dashboard</span>';
+  $('nav-files').innerHTML = icon('folder') + '<span>Files</span>';
+  $('nav-calendar').innerHTML = icon('calendar') + '<span>Calendar</span>';
+  $('nav-settings').innerHTML = icon('sliders') + '<span>Settings</span>';
+  $('addDeadlineBtn').innerHTML = icon('plus') + '<span>Add deadline</span>';
+  $('installBtn').innerHTML = icon('download') + '<span>Install app</span>';
+  $('installBtn').hidden = isStandalone();
+  $('storageNote').textContent = storageWorks ? 'Saved in this browser only.' : 'Saving is blocked here. Data lasts until you close this page.';
+}
+
+/* Redraws the bell and its red number (urgent + upcoming alerts only). */
+function renderBell() {
+  const n = buildAlerts().filter(function (a) { return a.level !== 'info'; }).length;
+  $('bellBtn').innerHTML = icon('bell') + (n ? '<span class="count">' + n + '</span>' : '');
+  $('bellBtn').setAttribute('aria-label', n ? n + ' deadline alerts' : 'No deadline alerts');
+}
+
+/* Draws the colored banner at the top for the most urgent open alert. */
+function renderBanner() {
+  const alerts = buildAlerts().filter(function (a) { return a.level !== 'info' && !ui.dismissed.has(a.id); });
+  const area = $('bannerArea');
+  if (!alerts.length) { area.innerHTML = ''; return; }
+  const top = alerts[0];
+  const more = alerts.length - 1;
+  area.innerHTML =
+    '<div class="banner banner-' + top.level + '" role="alert">' + icon('alert') +
+    '<div class="banner-text">' + esc(top.title) + ' (' + esc(top.course) + '): ' + esc(top.message) +
+    (more > 0 ? '<small>' + more + ' more deadline' + (more > 1 ? 's' : '') + ' need attention</small>' : '') + '</div>' +
+    '<button class="btn btn-small" data-action="view-deadline" data-id="' + esc(top.deadlineId) + '">View</button>' +
+    '<button class="icon-btn" data-action="dismiss-banner" data-id="' + esc(top.id) + '" aria-label="Dismiss alert">' + icon('x') + '</button>' +
+    '</div>';
+}
+
+/* Redraws everything that is currently visible. */
+function renderAll() {
+  renderChrome();
+  renderHeader();
+  renderBell();
+  renderBanner();
+  if (ui.view === 'dashboard') renderDashboard();
+  if (ui.view === 'files') renderFiles();
+  if (ui.view === 'calendar') renderCalendar();
+  if (ui.view === 'settings') renderSettings();
+}
+
+
+/* =====================================================================
+   G. DASHBOARD PAGE
+   ===================================================================== */
+
+/* Builds one deadline row (used on the dashboard and under the calendar). */
+function deadlineRowHTML(d) {
+  const info = dueInfo(d);
+  return '<li class="dl-row ' + (d.done ? 'is-done' : '') + '" style="--c:' + courseColor(d.course) + '" data-action="view-deadline" data-id="' + esc(d.id) + '">' +
+    '<button class="check ' + (d.done ? 'on' : '') + '" data-action="toggle-deadline" data-id="' + esc(d.id) + '" aria-pressed="' + d.done + '" aria-label="Mark ' + esc(d.title) + (d.done ? ' not done' : ' done') + '">' + (d.done ? icon('check') : '') + '</button>' +
+    '<div><div class="dl-title">' + esc(d.title) + '</div>' +
+    '<div class="dl-meta"><span class="tag-course">' + esc(courseName(d.course)) + '</span>' +
+    '<span class="badge type-' + esc(d.type.toLowerCase()) + '">' + esc(d.type) + '</span></div></div>' +
+    '<div class="dl-due due-' + info.level + '">' + esc(info.label) + '<small>' + esc(formatDate(d.date)) + (d.time ? ', ' + esc(formatTime(d.time)) : '') + '</small></div>' +
+    '<div class="row-actions">' +
+    '<button class="icon-btn" data-action="view-deadline" data-id="' + esc(d.id) + '" aria-label="View ' + esc(d.title) + '">' + icon('eye') + '</button>' +
+    '<button class="icon-btn danger" data-action="delete-deadline" data-id="' + esc(d.id) + '" aria-label="Delete ' + esc(d.title) + '">' + icon('trash') + '</button>' +
+    '</div></li>';
+}
+
+/* Draws the whole dashboard: hero, alerts, upcoming list, checklist, folders. */
+function renderDashboard() {
+  renderHero();
+  renderAlertCenter();
+  renderUpcoming();
+  renderChecklist();
+  renderFolderSummary();
+}
+
+/* The big blue "next deadline" card at the top of the dashboard. */
+function renderHero() {
+  const next = sortedDeadlines().find(function (d) { return !d.done; });
+  if (!next) {
+    $('heroArea').innerHTML =
+      '<div class="hero"><div><div class="hero-when">' + (state.deadlines.length ? 'You\u2019re all caught up' : 'No deadlines yet') + '</div>' +
+      '<div class="hero-meta">' + (state.deadlines.length ? 'No open deadlines. Add one when your next assignment is announced.' : 'Add your first assignment, quiz or exam and it will show up here.') + '</div></div>' +
+      '<button class="btn" data-action="add-deadline">Add a deadline</button></div>';
+    return;
+  }
+  const info = dueInfo(next);
+  $('heroArea').innerHTML =
+    '<div class="hero ' + (info.level === 'danger' ? 'is-danger' : '') + '" style="--c:' + courseColor(next.course) + '">' +
+    '<div><div class="hero-when">' + esc(info.label) + '</div>' +
+    '<div class="hero-title">' + esc(next.title) + ' (' + esc(courseName(next.course)) + ')</div>' +
+    '<div class="hero-meta">' + esc(formatDate(next.date)) + (next.time ? ' at ' + esc(formatTime(next.time)) : '') + '</div></div>' +
+    '<button class="btn" data-action="view-deadline" data-id="' + esc(next.id) + '">View details</button></div>';
+}
+
+/* The alert center card: urgent deadlines and weekly slide reminders. */
+function renderAlertCenter() {
+  const alerts = buildAlerts();
+  let html = '<div class="card-head"><h2>Alerts</h2><span class="hint">Flags deadlines within ' + APP_SETTINGS.SOON_DAYS + ' days</span></div>';
+  if (!alerts.length) {
+    html += '<div class="empty"><strong>No alerts right now</strong>Nothing is due in the next ' + APP_SETTINGS.SOON_DAYS + ' days.</div>';
+  } else {
+    html += alerts.map(function (a) {
+      const action = a.deadlineId
+        ? '<button class="btn btn-ghost btn-small" data-action="view-deadline" data-id="' + esc(a.deadlineId) + '">View</button>'
+        : '<button class="btn btn-ghost btn-small" data-action="goto-folder" data-id="' + esc(a.folderId) + '">Upload</button>';
+      return '<div class="alert-row alert-' + a.level + '"' + (a.deadlineId ? ' data-action="view-deadline" data-id="' + esc(a.deadlineId) + '"' : '') + '><span class="alert-dot">' + icon(a.deadlineId ? (a.level === 'danger' ? 'alert' : 'clock') : 'upload') + '</span>' +
+        '<div class="alert-body"><strong>' + esc(a.title) + '</strong><span>' + esc(a.deadlineId ? a.course + ': ' : '') + esc(a.message) + '</span></div>' + action + '</div>';
+    }).join('');
+  }
+  $('alertCard').innerHTML = html;
+}
+
+/* The next few open deadlines. */
+function renderUpcoming() {
+  const open = sortedDeadlines().filter(function (d) { return !d.done; });
+  let html = '<div class="card-head"><h2>Upcoming deadlines</h2><button class="btn btn-ghost btn-small" data-action="nav" data-view="calendar">Open calendar</button></div>';
+  if (!open.length) {
+    html += '<div class="empty"><strong>Nothing coming up</strong>Click Add deadline to track an assignment, quiz, or exam.</div>';
+  } else {
+    html += '<ul>' + open.slice(0, 6).map(deadlineRowHTML).join('') + '</ul>';
+    if (open.length > 6) html += '<p class="hint" style="margin-top:10px;color:var(--text-muted)">Showing 6 of ' + open.length + '. See all in the calendar.</p>';
+  }
+  $('upcomingCard').innerHTML = html;
+}
+
+/* The weekly checklist: slides for every course, plus your extra tasks. */
+function renderChecklist() {
+  const wk = weekStartStr(new Date());
+  const items = [];
+  rootFolders().forEach(function (f) {
+    const n = filesThisWeek(f.id);
+    items.push({
+      key: 'slides:' + f.id,
+      label: 'Lecture slides uploaded for ' + f.name,
+      hint: n ? '<span class="ok">' + n + (n === 1 ? ' file' : ' files') + ' added this week</span>' : '<span class="missing">No files added this week yet</span>',
+      folderId: f.id
+    });
+  });
+  const slideCount = items.length;
+  APP_SETTINGS.EXTRA_WEEKLY_TASKS.forEach(function (t, i) { items.push({ key: 'extra:' + i, label: t, hint: '' }); });
+
+  const done = items.filter(function (i) { return isChecked(i.key); }).length;
+  const pct = items.length ? Math.round(done / items.length * 100) : 0;
+  const weekLabel = parseDateStr(wk).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  let html = '<div class="card-head"><h2>Weekly check-in</h2><span class="hint">Week of ' + esc(weekLabel) + '</span></div>' +
+    '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Weekly checklist progress"><div style="width:' + pct + '%"></div></div>';
+  if (!items.length) {
+    html += '<div class="empty"><strong>No tasks yet</strong>Create a course folder and its slide reminder will appear here.</div>';
+  }
+  items.forEach(function (it, idx) {
+    if (idx === 0 && slideCount) html += '<p class="sec-label" style="margin-top:0">Did you upload all required slides?</p>';
+    if (idx === slideCount && idx > 0) html += '<p class="sec-label">Other weekly habits</p>';
+    const on = isChecked(it.key);
+    html += '<div class="todo ' + (on ? 'is-done' : '') + '">' +
+      '<button class="check ' + (on ? 'on' : '') + '" data-action="toggle-check" data-key="' + esc(it.key) + '" aria-pressed="' + on + '" aria-label="' + esc(it.label) + '">' + (on ? icon('check') : '') + '</button>' +
+      '<div class="todo-text"><strong>' + esc(it.label) + '</strong>' + (it.hint ? it.hint : '') + '</div>' +
+      (it.folderId && !on ? '<button class="btn btn-ghost btn-small" data-action="goto-folder" data-id="' + esc(it.folderId) + '">Upload</button>' : '') +
+      '</div>';
+  });
+  if (items.length && done === items.length) html += '<p style="margin-top:12px;color:var(--ok);font-weight:650">All done for this week.</p>';
+  $('checklistCard').innerHTML = html;
+}
+
+/* A quick list of your folders with file counts. */
+function renderFolderSummary() {
+  let html = '<div class="card-head"><h2>Your courses</h2><button class="btn btn-ghost btn-small" data-action="nav" data-view="files">Manage files</button></div>';
+  if (!state.folders.length) {
+    html += '<div class="empty"><strong>No folders yet</strong>Create one folder per course to keep slides and notes together.<br><button class="btn btn-small" data-action="new-folder">New folder</button></div>';
+  } else {
+    html += rootFolders().map(function (f) {
+      const total = fileCountDeep(f.id);
+      return '<button class="mini-folder" data-action="goto-folder" data-id="' + esc(f.id) + '"><span class="fold-tile sm" style="--c:' + f.color + '">' + icon('folder') + '</span>' +
+        '<span class="name">' + esc(f.name) + '</span><span class="num">' + total + (total === 1 ? ' file' : ' files') + '</span></button>';
+    }).join('');
+  }
+  $('folderSummaryCard').innerHTML = html;
+}
+
+
+/* =====================================================================
+   H. FILES & FOLDERS PAGE
+   ===================================================================== */
+
+/* Builds the indented folder tree for the left-hand list (calls itself for each level). */
+function folderTreeHTML(parentId) {
+  return childFolders(parentId).map(function (f) {
+    const depth = folderDepth(f.id);
+    const color = rootOf(f.id).color;
+    return '<div class="folder-item ' + (depth === 0 ? 'is-main' : 'is-sub') + '" style="--depth:' + depth + ';--c:' + color + '">' +
+      '<button class="folder-pick" data-action="select-folder" data-id="' + esc(f.id) + '" aria-pressed="' + (f.id === ui.folderId) + '">' +
+      (depth === 0 ? '<span class="fold-tile">' + icon('folder') + '</span>' : '<span class="fold-mini">' + icon('folder') + '</span>') + '<span class="name">' + esc(f.name) + '</span><span class="num">' + fileCountDeep(f.id) + '</span></button>' +
+      (depth < APP_SETTINGS.MAX_FOLDER_DEPTH - 1 ? '<button class="icon-btn" data-action="new-folder" data-parent="' + esc(f.id) + '" aria-label="New subfolder in ' + esc(f.name) + '">' + icon('plus') + '</button>' : '') +
+      '<button class="icon-btn danger" data-action="delete-folder" data-id="' + esc(f.id) + '" aria-label="Delete folder ' + esc(f.name) + '">' + icon('trash') + '</button></div>' +
+      folderTreeHTML(f.id);
+  }).join('');
+}
+
+/* Draws the folder tree (left) and the open folder with its subfolders and files (right). */
+function renderFiles() {
+  if (!folderById(ui.folderId)) { const r = rootFolders()[0]; ui.folderId = r ? r.id : null; }
+
+  /* --- Left: tree of folders --- */
+  let list = '<div class="card-head"><h2>Folders</h2><button class="btn btn-small" data-action="new-folder" data-parent="" aria-label="New main folder">' + icon('plus') + '<span>New</span></button></div>';
+  if (!state.folders.length) {
+    list += '<div class="empty"><strong>Start with a course folder</strong>For example CICS 111 or MATH 173. You can add subfolders inside it later.</div>';
+  } else {
+    list += '<div class="folder-tree">' + folderTreeHTML('') + '</div>';
+  }
+  $('folderListCard').innerHTML = list;
+
+  /* --- Right: the selected folder --- */
+  const f = folderById(ui.folderId);
+  if (!f) {
+    $('folderDetailCard').innerHTML = '<div class="empty"><strong>No folder selected</strong>Create a folder to start uploading files.<br><button class="btn" data-action="new-folder" data-parent="">Create a folder</button></div>';
+    return;
+  }
+  const color = rootOf(f.id).color;
+  const subs = childFolders(f.id);
+  const files = state.files.filter(function (x) { return x.folderId === f.id; })
+    .sort(function (a, b) { return b.added.localeCompare(a.added); });
+
+  /* Breadcrumb path: CICS 111 / Lecture slides (each earlier part is clickable) */
+  const chain = [];
+  let c = f, g = 0;
+  while (c && g++ < 20) { chain.unshift(c); c = c.parentId ? folderById(c.parentId) : null; }
+  const crumbs = chain.length > 1 ? '<nav class="crumbs" aria-label="Folder path">' + chain.map(function (x, i) {
+    return i < chain.length - 1
+      ? '<button class="crumb" data-action="select-folder" data-id="' + esc(x.id) + '">' + esc(x.name) + '</button><span class="sep">/</span>'
+      : '<span class="crumb-current">' + esc(x.name) + '</span>';
+  }).join('') + '</nav>' : '';
+
+  const canAddSub = folderDepth(f.id) < APP_SETTINGS.MAX_FOLDER_DEPTH - 1;
+  let html = crumbs + '<div class="card-head"><div class="folder-title ' + (f.parentId ? 'is-sub' : 'is-main') + '" style="--c:' + color + '">' +
+    (f.parentId ? '<span class="fold-mini">' + icon('folder') + '</span>' : '<span class="fold-tile big">' + icon('folder') + '</span>') +
+    '<div><h2>' + esc(f.name) + '</h2><span class="kind">' + (f.parentId ? 'Subfolder in ' + esc(folderById(f.parentId) ? folderById(f.parentId).name : '') : 'Main folder') + '</span></div></div>' +
+    '<div class="head-actions"><span class="hint">' + files.length + (files.length === 1 ? ' file here' : ' files here') + '</span>' +
+    (canAddSub ? '<button class="btn btn-ghost btn-small" data-action="new-folder" data-parent="' + esc(f.id) + '">' + icon('plus') + '<span>New subfolder</span></button>' : '') +
+    '</div></div>';
+
+  if (subs.length) {
+    html += '<p class="sub-label">Subfolders</p><div class="subfolders">' + subs.map(function (sf) {
+      return '<button class="subfolder" style="--c:' + color + '" data-action="select-folder" data-id="' + esc(sf.id) + '">' + icon('folder') +
+        '<span class="name">' + esc(sf.name) + '</span><span class="num">' + fileCountDeep(sf.id) + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  html += '<div class="dropzone" data-action="pick-files" tabindex="0" role="button" aria-label="Upload files to ' + esc(folderPath(f.id)) + '">' +
+    icon('upload') + '<strong>Drop files here or click to choose</strong>' +
+    '<span>They will be added to ' + esc(folderPath(f.id)) + '</span></div>';
+
+  if (!files.length) {
+    html += '<div class="empty" style="margin-top:14px"><strong>No files in this folder yet</strong>' + (subs.length ? 'Open a subfolder above, or upload here.' : 'Upload lecture slides, notes, or readings.') + '</div>';
+  } else {
+    html += '<ul style="margin-top:14px">' + files.map(function (x) {
+      return '<li class="file-row"><span class="file-ext">' + esc(fileExt(x.name)) + '</span>' +
+        '<div class="file-info"><strong title="' + esc(x.name) + '">' + esc(x.name) + '</strong>' +
+        '<span>' + formatSize(x.size) + ', added ' + esc(new Date(x.added).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })) + '</span></div>' +
+        '<button class="icon-btn" data-action="view-file" data-id="' + esc(x.id) + '" aria-label="View ' + esc(x.name) + '">' + icon('eye') + '</button>' +
+        '<button class="icon-btn danger" data-action="remove-file" data-id="' + esc(x.id) + '" aria-label="Remove ' + esc(x.name) + '">' + icon('trash') + '</button></li>';
+    }).join('') + '</ul>';
+  }
+  $('folderDetailCard').innerHTML = html;
+}
+
+/* Adds chosen/dropped files to a folder. Small files are kept for next visit. */
+function handleFiles(fileList, folderId) {
+  const folder = folderById(folderId);
+  if (!folder) { toast('Create a folder first, then upload.'); return; }
+  const files = Array.prototype.slice.call(fileList || []);
+  if (!files.length) return;
+
+  Promise.all(files.map(function (file) {
+    const rec = { id: uid(), folderId: folderId, name: file.name, size: file.size, type: file.type || '', added: new Date().toISOString() };
+    runtimeFiles[rec.id] = file;
+    if (file.size > APP_SETTINGS.MAX_STORED_FILE_BYTES) return Promise.resolve(rec);
+    return new Promise(function (resolve) {
+      const r = new FileReader();
+      r.onload = function () { rec.data = r.result; resolve(rec); };
+      r.onerror = function () { resolve(rec); };
+      r.readAsDataURL(file);
+    });
+  })).then(function (recs) {
+    recs.forEach(function (r) { state.files.push(r); });
+    if (!saveState()) {
+      /* Storage is full: keep only the file names and try again. */
+      recs.forEach(function (r) { delete r.data; });
+      saveState();
+      toast('Browser storage is full, so file previews last for this session only.');
+    } else {
+      toast(recs.length + (recs.length === 1 ? ' file' : ' files') + ' added to ' + folderPath(folderId));
+    }
+    renderAll();
+  });
+}
+
+/* Opens the viewer pop-up for one file. */
+function openFileViewer(id) {
+  const f = state.files.find(function (x) { return x.id === id; });
+  if (!f) return;
+  $('viewerTitle').textContent = f.name;
+  $('viewerMeta').textContent = folderPath(f.folderId) + ', ' + formatSize(f.size);
+  const body = $('viewerBody');
+  const dl = $('viewerDownload');
+  dl.innerHTML = '';
+
+  let src = f.data || null;
+  if (!src && runtimeFiles[id]) {
+    if (!blobUrls[id]) blobUrls[id] = URL.createObjectURL(runtimeFiles[id]);
+    src = blobUrls[id];
+  }
+  if (!src) {
+    body.innerHTML = '<div class="viewer-note">Preview isn\u2019t available. Large files are only kept until you close or reload the page, so upload this one again to view it.</div>';
+  } else {
+    const lower = f.name.toLowerCase();
+    dl.innerHTML = '<a class="btn btn-ghost" download="' + esc(f.name) + '" href="' + esc(src) + '">Download</a>';
+    if (f.type.indexOf('image/') === 0) {
+      body.innerHTML = '<img alt="' + esc(f.name) + '" src="' + esc(src) + '">';
+    } else if (f.type === 'application/pdf') {
+      body.innerHTML = '<iframe title="' + esc(f.name) + '" src="' + esc(src) + '"></iframe>';
+    } else if (f.type.indexOf('text/') === 0 || /\.(txt|md|csv|json)$/.test(lower)) {
+      body.innerHTML = '<div class="viewer-note">Loading\u2026</div>';
+      fetch(src).then(function (r) { return r.text(); }).then(function (t) {
+        body.innerHTML = '<pre>' + esc(t.slice(0, 20000)) + (t.length > 20000 ? '\n\n(Preview shortened)' : '') + '</pre>';
+      }).catch(function () {
+        body.innerHTML = '<div class="viewer-note">Couldn\u2019t show a preview. Use Download to open it.</div>';
+      });
+    } else {
+      body.innerHTML = '<div class="viewer-note">No preview for this file type. Use Download to open it.</div>';
+    }
+  }
+  $('viewerDialog').showModal();
+}
+
+/* Builds the "Where should it go?" choices: top level, or inside any existing folder. */
+function folderParentOptions(selected) {
+  let out = '<option value=""' + (!selected ? ' selected' : '') + '>Main folder (top level)</option>';
+  (function walk(pid) {
+    childFolders(pid).forEach(function (f) {
+      if (folderDepth(f.id) < APP_SETTINGS.MAX_FOLDER_DEPTH - 1) {
+        out += '<option value="' + esc(f.id) + '"' + (f.id === selected ? ' selected' : '') + '>Inside: ' + esc(folderPath(f.id)) + '</option>';
+      }
+      walk(f.id);
+    });
+  })('');
+  return out;
+}
+
+/* Updates the pop-up title and hides the color choice when making a subfolder
+   (subfolders use their main folder's color). */
+function syncFolderModal() {
+  const isSub = !!$('folderParent').value;
+  $('folderColorField').hidden = isSub;
+  $('folderDlgTitle').textContent = isSub ? 'New subfolder' : 'New main folder';
+}
+
+/* Opens the "New folder" pop-up. Pass a parent folder id to start a subfolder inside it. */
+function openFolderModal(parentId) {
+  $('folderForm').reset();
+  $('folderError').textContent = '';
+  $('folderParent').innerHTML = folderParentOptions(parentId || '');
+  const used = rootFolders().map(function (f) { return f.color; });
+  const pick = APP_SETTINGS.FOLDER_COLORS.find(function (c) { return used.indexOf(c) === -1; }) || APP_SETTINGS.FOLDER_COLORS[0];
+  $('folderColors').innerHTML = APP_SETTINGS.FOLDER_COLORS.map(function (c, i) {
+    return '<label><input type="radio" name="fcolor" value="' + c + '" ' + (c === pick ? 'checked' : '') + ' aria-label="Color ' + (i + 1) + '"><span class="dot" style="--c:' + c + '"></span></label>';
+  }).join('');
+  syncFolderModal();
+  $('folderDialog').showModal();
+  $('folderName').focus();
+}
+
+/* Saves the new folder from the pop-up. */
+function saveFolder(e) {
+  e.preventDefault();
+  const name = $('folderName').value.trim();
+  const parentId = $('folderParent').value;
+  const err = $('folderError');
+  if (!name) { err.textContent = 'Enter a folder name, such as ' + (parentId ? 'Lecture slides.' : 'CICS 111.'); return; }
+  if (state.folders.some(function (f) { return (f.parentId || '') === parentId && f.name.toLowerCase() === name.toLowerCase(); })) {
+    err.textContent = 'There is already a folder called ' + name + ' here.'; return;
+  }
+  const checked = document.querySelector('input[name="fcolor"]:checked');
+  const color = parentId ? rootOf(parentId).color : (checked ? checked.value : APP_SETTINGS.FOLDER_COLORS[0]);
+  const folder = { id: uid(), name: name, color: color, parentId: parentId };
+  state.folders.push(folder);
+  ui.folderId = folder.id;
+  saveState();
+  $('folderDialog').close();
+  if (ui.view !== 'files') showView('files'); else renderAll();
+  toast((parentId ? 'Subfolder created: ' : 'Folder created: ') + name);
+}
+
+/* Deletes a folder, everything inside it, and its files (after confirming).
+   Deadlines for a deleted course are kept and shown as General. */
+function deleteFolder(id) {
+  const f = folderById(id);
+  if (!f) return;
+  const ids = descendantIds(id);
+  const fileN = state.files.filter(function (x) { return ids.indexOf(x.folderId) > -1; }).length;
+  const subN = ids.length - 1;
+  const msg = 'This removes the folder' + (subN ? ', its ' + subN + (subN === 1 ? ' subfolder' : ' subfolders') : '') +
+    ' and ' + fileN + (fileN === 1 ? ' file' : ' files') + '.' + (f.parentId ? '' : ' Deadlines for this course are kept and shown as General.');
+  askConfirm('Delete ' + f.name + '?', msg, 'Delete folder', function () {
+    state.files.filter(function (x) { return ids.indexOf(x.folderId) > -1; }).forEach(function (x) { dropFileMemory(x.id); });
+    state.files = state.files.filter(function (x) { return ids.indexOf(x.folderId) === -1; });
+    state.deadlines.forEach(function (d) { if (ids.indexOf(d.course) > -1) d.course = ''; });
+    state.folders = state.folders.filter(function (x) { return ids.indexOf(x.id) === -1; });
+    if (ids.indexOf(ui.folderId) > -1) ui.folderId = f.parentId || null;
+    saveState(); renderAll(); toast('Folder deleted');
+  });
+}
+
+/* Removes one file (after confirming). */
+function removeFile(id) {
+  const f = state.files.find(function (x) { return x.id === id; });
+  if (!f) return;
+  askConfirm('Remove this file?', f.name + ' will be removed from ' + folderPath(f.folderId) + '.', 'Remove file', function () {
+    dropFileMemory(id);
+    state.files = state.files.filter(function (x) { return x.id !== id; });
+    saveState(); renderAll(); toast('File removed');
+  });
+}
+
+/* Frees the temporary memory used by a removed file's preview. */
+function dropFileMemory(id) {
+  if (blobUrls[id]) { URL.revokeObjectURL(blobUrls[id]); delete blobUrls[id]; }
+  delete runtimeFiles[id];
+}
+
+
+/* =====================================================================
+   I. CALENDAR PAGE
+   ===================================================================== */
+
+/* Draws the month grid and the list of that month's deadlines. */
+function renderCalendar() {
+  const y = ui.cal.y, m = ui.cal.m;
+  const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const order = APP_SETTINGS.WEEK_STARTS_ON_MONDAY ? names.slice(1).concat(names[0]) : names;
+  const first = new Date(y, m, 1);
+  const offset = APP_SETTINGS.WEEK_STARTS_ON_MONDAY ? (first.getDay() + 6) % 7 : first.getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const cellCount = Math.ceil((offset + daysInMonth) / 7) * 7;
+  const today = todayStr();
+
+  let html = '<div class="cal-head"><h2>' + esc(first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })) + '</h2>' +
+    '<div class="cal-nav"><button class="btn btn-ghost btn-small" data-action="cal-today">Today</button>' +
+    '<button class="icon-btn" style="border-color:var(--border)" data-action="cal-prev" aria-label="Previous month">' + icon('left') + '</button>' +
+    '<button class="icon-btn" style="border-color:var(--border)" data-action="cal-next" aria-label="Next month">' + icon('right') + '</button></div></div>' +
+    '<div class="cal-grid" role="grid">' + order.map(function (n) { return '<div class="cal-dow">' + n + '</div>'; }).join('');
+
+  for (let i = 0; i < cellCount; i++) {
+    const d = new Date(y, m, 1 - offset + i);
+    const ds = toDateStr(d);
+    const items = deadlinesOn(ds);
+    const cls = ['cell'];
+    if (d.getMonth() !== m) cls.push('other');
+    if (ds === today) cls.push('today');
+    const chips = items.slice(0, 3).map(function (it) {
+      return '<span class="chip ' + (it.done ? 'is-done' : '') + '" style="--c:' + courseColor(it.course) + '" data-action="view-deadline" data-id="' + esc(it.id) + '" title="' + esc(it.title + ' (' + courseName(it.course) + ')') + '">' + esc(it.title) + '</span>';
+    }).join('') + (items.length > 3 ? '<span class="more">+' + (items.length - 3) + '</span>' : '');
+    html += '<div class="' + cls.join(' ') + '" tabindex="0" data-action="add-on-day" data-date="' + ds + '" aria-label="' + esc(d.toDateString()) + ', ' + items.length + ' deadlines. Press Enter to add one.">' +
+      '<span class="daynum">' + d.getDate() + '</span><div class="chips">' + chips + '</div></div>';
+  }
+  html += '</div><p style="margin-top:10px;color:var(--text-muted);font-size:13.5px">Click any day to add a deadline. Click a deadline to edit it.</p>';
+  $('calendarCard').innerHTML = html;
+
+  /* Month list under the calendar (also the full-detail view on phones) */
+  const prefix = y + '-' + pad(m + 1);
+  const monthItems = sortedDeadlines().filter(function (d) { return d.date.indexOf(prefix) === 0; });
+  let list = '<div class="card-head"><h2>Deadlines in ' + esc(first.toLocaleDateString(undefined, { month: 'long' })) + '</h2><span class="hint">' + monthItems.length + ' total</span></div>';
+  list += monthItems.length ? '<ul>' + monthItems.map(deadlineRowHTML).join('') + '</ul>'
+    : '<div class="empty"><strong>No deadlines this month</strong>Click a day on the calendar to add one.</div>';
+  $('monthListCard').innerHTML = list;
+}
+
+/* Moves the calendar by a number of months (-1 = back, +1 = forward). */
+function shiftMonth(delta) {
+  const d = new Date(ui.cal.y, ui.cal.m + delta, 1);
+  ui.cal.y = d.getFullYear();
+  ui.cal.m = d.getMonth();
+  renderCalendar();
+}
+
+
+/* =====================================================================
+   J. ADD / EDIT / DELETE DEADLINES
+   ===================================================================== */
+
+/* Opens the deadline pop-up. Pass {date} to add on a day, or {id} to edit. */
+function openDeadlineModal(opts) {
+  opts = opts || {};
+  const editing = opts.id ? state.deadlines.find(function (d) { return d.id === opts.id; }) : null;
+  ui.editingId = editing ? editing.id : null;
+
+  $('deadlineDlgTitle').textContent = editing ? 'Edit deadline' : 'Add deadline';
+  $('dlDeleteBtn').hidden = !editing;
+  $('dlError').textContent = '';
+
+  /* Course dropdown: your folders plus "General" */
+  $('dlCourse').innerHTML = rootFolders().map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.name) + '</option>'; }).join('') +
+    '<option value="">General (no course)</option>';
+  $('dlType').innerHTML = APP_SETTINGS.DEADLINE_TYPES.map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('');
+
+  if (editing) {
+    $('dlTitle').value = editing.title;
+    $('dlCourse').value = editing.course;
+    $('dlType').value = editing.type;
+    $('dlDate').value = editing.date;
+    $('dlTime').value = editing.time || '';
+  } else {
+    $('dlTitle').value = '';
+    $('dlCourse').value = (ui.view === 'files' && ui.folderId && rootOf(ui.folderId)) ? rootOf(ui.folderId).id : (rootFolders()[0] ? rootFolders()[0].id : '');
+    $('dlType').value = APP_SETTINGS.DEADLINE_TYPES[0];
+    $('dlDate').value = opts.date || todayStr();
+    $('dlTime').value = APP_SETTINGS.DEFAULT_DUE_TIME;
+  }
+
+  /* Show what's already due on that day, so you can spot clashes */
+  const existing = (!editing && opts.date) ? deadlinesOn(opts.date) : [];
+  $('dayList').innerHTML = existing.length
+    ? '<div class="day-list"><strong>Already due on ' + esc(formatDate(opts.date)) + '</strong><ul>' +
+      existing.map(function (d) { return '<li>' + esc(d.title) + ' (' + esc(courseName(d.course)) + ')' + (d.time ? ', ' + esc(formatTime(d.time)) : '') + '</li>'; }).join('') + '</ul></div>'
+    : '';
+
+  $('deadlineDialog').showModal();
+  $('dlTitle').focus();
+}
+
+/* Validates and saves the deadline form. */
+function saveDeadline(e) {
+  e.preventDefault();
+  const title = $('dlTitle').value.trim();
+  const date = $('dlDate').value;
+  const err = $('dlError');
+  if (!title) { err.textContent = 'Enter a title, such as Homework 3.'; $('dlTitle').focus(); return; }
+  if (!date) { err.textContent = 'Choose a due date.'; $('dlDate').focus(); return; }
+
+  const data = { title: title, course: $('dlCourse').value, type: $('dlType').value, date: date, time: $('dlTime').value };
+  if (ui.editingId) {
+    const d = state.deadlines.find(function (x) { return x.id === ui.editingId; });
+    if (d) Object.assign(d, data);
+  } else {
+    state.deadlines.push(Object.assign({ id: uid(), done: false }, data));
+  }
+  /* Jump the calendar to the month of the saved deadline */
+  const dd = parseDateStr(date);
+  ui.cal.y = dd.getFullYear(); ui.cal.m = dd.getMonth();
+  saveState();
+  $('deadlineDialog').close();
+  renderAll();
+  toast(ui.editingId ? 'Deadline updated' : 'Deadline added');
+}
+
+/* Ticks a deadline done / not done. */
+function toggleDeadline(id) {
+  const d = state.deadlines.find(function (x) { return x.id === id; });
+  if (!d) return;
+  d.done = !d.done;
+  saveState(); renderAll();
+  if ($('viewDialog').open && ui.viewingId === id) renderViewDialog();
+  toast(d.done ? 'Marked as done' : 'Marked as not done');
+}
+
+/* Deletes a deadline after confirming. */
+function deleteDeadline(id, closeModalFirst) {
+  const d = state.deadlines.find(function (x) { return x.id === id; });
+  if (!d) return;
+  if (closeModalFirst) $('deadlineDialog').close();
+  askConfirm('Delete this deadline?', d.title + ' (' + courseName(d.course) + ') will be removed.', 'Delete deadline', function () {
+    state.deadlines = state.deadlines.filter(function (x) { return x.id !== id; });
+    if ($('viewDialog').open) $('viewDialog').close();
+    saveState(); renderAll(); toast('Deadline deleted');
+  });
+}
+
+/* Ticks / unticks a weekly checklist item. It resets automatically each Monday. */
+function toggleCheck(key) {
+  const wk = weekStartStr(new Date());
+  state.checklist[wk] = state.checklist[wk] || {};
+  state.checklist[wk][key] = !state.checklist[wk][key];
+  /* Keep only the 8 most recent weeks so storage stays small */
+  Object.keys(state.checklist).sort().slice(0, -8).forEach(function (k) { delete state.checklist[k]; });
+  saveState(); renderAll();
+}
+
+
+/* =====================================================================
+   J2. VIEW A DEADLINE (read-only) – Edit is a button inside this pop-up
+   ===================================================================== */
+
+/* Opens the read-only details pop-up for a deadline. */
+function openViewDialog(id) {
+  if (!state.deadlines.some(function (d) { return d.id === id; })) return;
+  ui.viewingId = id;
+  renderViewDialog();
+  if (!$('viewDialog').open) $('viewDialog').showModal();
+}
+
+/* Fills the details pop-up (also called again after "Mark as done"). */
+function renderViewDialog() {
+  const d = state.deadlines.find(function (x) { return x.id === ui.viewingId; });
+  if (!d) return;
+  const info = dueInfo(d);
+  const fullDate = parseDateStr(d.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  $('viewDlBody').innerHTML =
+    '<div class="dlg view-dl" style="--c:' + courseColor(d.course) + '">' +
+    '<div class="vd-top"><span class="tag-course">' + esc(courseName(d.course)) + '</span>' +
+    '<span class="badge type-' + esc(d.type.toLowerCase()) + '">' + esc(d.type) + '</span></div>' +
+    '<h2 class="vd-title" id="vdTitle">' + esc(d.title) + '</h2>' +
+    '<p class="vd-when due-' + info.level + '">' + esc(info.label) + '</p>' +
+    '<dl class="vd-grid">' +
+    '<div><dt>Due date</dt><dd>' + esc(fullDate) + '</dd></div>' +
+    '<div><dt>Time</dt><dd>' + (d.time ? esc(formatTime(d.time)) : 'No time set') + '</dd></div>' +
+    '<div><dt>Course</dt><dd>' + esc(courseName(d.course)) + '</dd></div>' +
+    '<div><dt>Status</dt><dd>' + (d.done ? 'Completed' : 'Not done yet') + '</dd></div></dl>' +
+    '<div class="dlg-actions">' +
+    '<button type="button" class="btn btn-danger" data-action="delete-deadline" data-id="' + esc(d.id) + '">Delete</button>' +
+    '<span class="spacer"></span>' +
+    '<button type="button" class="btn btn-ghost" data-action="toggle-deadline" data-id="' + esc(d.id) + '">' + (d.done ? 'Mark as not done' : 'Mark as done') + '</button>' +
+    '<button type="button" class="btn" data-action="edit-deadline" data-id="' + esc(d.id) + '">' + icon('edit') + '<span>Edit</span></button>' +
+    '</div>' +
+    '<div class="dlg-actions" style="margin-top:10px"><button type="button" class="btn btn-ghost" style="width:100%" data-action="close-dialog">Close</button></div>' +
+    '</div>';
+}
+
+
+/* =====================================================================
+   K. CONFIRM POP-UP & RESET
+   ===================================================================== */
+
+/* Shows the "Are you sure?" pop-up; runs onOk if the user confirms. */
+function askConfirm(title, message, okText, onOk) {
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent = message;
+  $('confirmOk').textContent = okText || 'Delete';
+  confirmCallback = onOk;
+  $('confirmDialog').showModal();
+}
+
+/* Wipes all data (after confirming). */
+function resetAll() {
+  askConfirm('Clear all data?', 'This deletes every folder, file, and deadline stored in this browser. It cannot be undone.', 'Clear everything', function () {
+    Object.keys(blobUrls).forEach(dropFileMemory);
+    const keepSettings = state.settings;   // clearing data keeps your preferences
+    state = emptyState();
+    state.settings = keepSettings;
+    ui.folderId = null;
+    saveState(); renderAll(); toast('All data cleared');
+  });
+}
+
+
+/* =====================================================================
+   L. EVENT HANDLING – one listener decides what every click does
+   ===================================================================== */
+
+/* Every clickable element carries data-action="something". This function
+   looks at that name and runs the matching feature. */
+document.addEventListener('click', function (e) {
+  const dlg = e.target;
+  /* Clicking the dark backdrop closes a pop-up */
+  if (dlg.tagName === 'DIALOG' && dlg.id !== 'welcomeDialog') { dlg.close(); return; }
+
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const id = el.dataset.id;
+
+  switch (el.dataset.action) {
+    case 'nav': showView(el.dataset.view); break;
+    case 'go-alerts':
+      showView('dashboard');
+      $('alertCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      break;
+    case 'add-deadline': openDeadlineModal({ date: todayStr() }); break;
+    case 'add-on-day': openDeadlineModal({ date: el.dataset.date }); break;
+    case 'view-deadline': openViewDialog(id); break;
+    case 'edit-deadline':
+      if ($('viewDialog').open) $('viewDialog').close();   // Edit lives inside the view pop-up
+      openDeadlineModal({ id: id });
+      break;
+    case 'install-app': showInstallPopup(); break;
+    case 'settings-tab': ui.settingsTab = el.dataset.tab; renderSettings(); window.scrollTo(0, 0); break;
+    case 'export-backup': exportBackup(); break;
+    case 'import-backup': $('importInput').click(); break;
+    case 'install-now': runInstall(); break;
+    case 'install-later': $('installDialog').close(); break;
+    case 'skip-name': finishWelcome(''); break;
+    case 'toggle-deadline': toggleDeadline(id); break;
+    case 'delete-deadline': deleteDeadline(id, false); break;
+    case 'delete-from-modal': deleteDeadline(ui.editingId, true); break;
+    case 'dismiss-banner': ui.dismissed.add(id); renderBanner(); break;
+    case 'toggle-check': toggleCheck(el.dataset.key); break;
+    case 'goto-folder': ui.folderId = id; showView('files'); break;
+    case 'new-folder': openFolderModal(el.dataset.parent || ''); break;
+    case 'select-folder': ui.folderId = id; renderFiles(); break;
+    case 'delete-folder': deleteFolder(id); break;
+    case 'pick-files': $('fileInput').click(); break;
+    case 'view-file': openFileViewer(id); break;
+    case 'remove-file': removeFile(id); break;
+    case 'cal-prev': shiftMonth(-1); break;
+    case 'cal-next': shiftMonth(1); break;
+    case 'cal-today':
+      ui.cal.y = new Date().getFullYear(); ui.cal.m = new Date().getMonth(); renderCalendar(); break;
+    case 'close-dialog': el.closest('dialog').close(); break;
+    case 'reset-all': resetAll(); break;
+  }
+});
+
+/* Lets keyboard users press Enter or Space on calendar days and the upload box. */
+document.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cell, .dropzone')) {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
+/* When files are chosen with the file picker. */
+$('fileInput').addEventListener('change', function (e) {
+  handleFiles(e.target.files, ui.folderId);
+  e.target.value = '';   // lets you pick the same file again later
+});
+
+/* Drag-and-drop: highlight the box and accept dropped files. */
+document.addEventListener('dragover', function (e) {
+  e.preventDefault();   // stops the browser from opening a dropped file in a new tab
+  const zone = e.target.closest && e.target.closest('.dropzone');
+  document.querySelectorAll('.dropzone.drag-over').forEach(function (z) { if (z !== zone) z.classList.remove('drag-over'); });
+  if (zone) zone.classList.add('drag-over');
+});
+document.addEventListener('dragleave', function (e) {
+  const zone = e.target.closest && e.target.closest('.dropzone');
+  if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+});
+document.addEventListener('drop', function (e) {
+  e.preventDefault();
+  document.querySelectorAll('.dropzone.drag-over').forEach(function (z) { z.classList.remove('drag-over'); });
+  if (e.target.closest && e.target.closest('.dropzone')) handleFiles(e.dataTransfer.files, ui.folderId);
+});
+
+/* Form submissions and the confirm button. */
+$('deadlineForm').addEventListener('submit', saveDeadline);
+$('folderForm').addEventListener('submit', saveFolder);
+$('folderParent').addEventListener('change', syncFolderModal);
+$('confirmOk').addEventListener('click', function () {
+  $('confirmDialog').close();
+  if (confirmCallback) { const cb = confirmCallback; confirmCallback = null; cb(); }
+});
+
+
+/* =====================================================================
+   L3. SETTINGS, FEEDBACK AND PRIVACY PAGES
+   ===================================================================== */
+
+/* Applies the saved options to the running app (theme, alert timing, etc.).
+   Called at start-up and every time a setting changes. */
+function applySettings() {
+  const st = state.settings;
+  APP_SETTINGS.URGENT_DAYS = st.urgentDays;
+  APP_SETTINGS.SOON_DAYS = st.soonDays;
+  APP_SETTINGS.WEEK_STARTS_ON_MONDAY = st.weekStartsMonday;
+  APP_SETTINGS.DEFAULT_DUE_TIME = st.defaultTime;
+  APP_SETTINGS.EXTRA_WEEKLY_TASKS = st.extraTasks;
+  if (st.theme === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', st.theme);
+}
+
+/* Saves one changed setting, then refreshes the app. */
+function saveSetting(key, val) {
+  const st = state.settings;
+  switch (key) {
+    case 'name': st.name = String(val).trim().slice(0, 40); st.askedName = true; break;
+    case 'theme': st.theme = ['light', 'dark', 'system'].indexOf(val) > -1 ? val : 'system'; break;
+    case 'urgentDays':
+      st.urgentDays = Number(val);
+      if (st.soonDays < st.urgentDays) st.soonDays = st.urgentDays;   // keep "soon" at least as long as "urgent"
+      break;
+    case 'soonDays':
+      st.soonDays = Number(val);
+      if (st.urgentDays > st.soonDays) st.urgentDays = st.soonDays;
+      break;
+    case 'weekStart': st.weekStartsMonday = (val === 'monday'); break;
+    case 'defaultTime': st.defaultTime = val || DEFAULT_SETTINGS.defaultTime; break;
+    case 'extraTasks':
+      st.extraTasks = String(val).split('\n').map(function (t) { return t.trim().slice(0, 80); }).filter(Boolean).slice(0, 10);
+      break;
+    default: return;
+  }
+  saveState();
+  applySettings();
+  renderAll();
+  toast('Settings saved');
+}
+
+/* Listens for changes on any control marked with data-setting="...". */
+document.addEventListener('change', function (e) {
+  const el = e.target.closest ? e.target.closest('[data-setting]') : null;
+  if (el) saveSetting(el.dataset.setting, el.value);
+});
+
+/* Draws the Settings page: the tab bar plus whichever tab is open. */
+function renderSettings() {
+  const tabs = [['settings', 'Settings'], ['feedback', 'Feedback'], ['privacy', 'Privacy policy']];
+  const tab = ui.settingsTab;
+  let html = '<div class="tabs" role="tablist">' + tabs.map(function (t) {
+    return '<button class="tab" role="tab" aria-selected="' + (t[0] === tab) + '" data-action="settings-tab" data-tab="' + t[0] + '">' + t[1] + '</button>';
+  }).join('') + '</div>';
+  html += tab === 'feedback' ? feedbackHTML() : (tab === 'privacy' ? privacyHTML() : settingsHTML());
+  $('settingsArea').innerHTML = html;
+}
+
+/* One row in the settings list: label + hint on the left, control on the right. */
+function setRow(label, hint, control, stack) {
+  return '<div class="set-row' + (stack ? ' stack' : '') + '"><div class="set-text"><strong>' + label + '</strong>' + (hint ? '<span>' + hint + '</span>' : '') + '</div><div class="set-ctl">' + control + '</div></div>';
+}
+
+/* Turns [[value, label], ...] into <option> tags with the current one selected. */
+function optionsHTML(list, current) {
+  return list.map(function (o) {
+    return '<option value="' + o[0] + '"' + (String(o[0]) === String(current) ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+  }).join('');
+}
+
+/* The main Settings tab. */
+function settingsHTML() {
+  const st = state.settings;
+  const days = function (n) { return [n, n + (n === 1 ? ' day' : ' days')]; };
+  const urgent = [1, 2, 3, 5].map(days);
+  const soon = [3, 5, 7, 10, 14, 21, 30].map(days);
+
+  let h = '<div class="settings-wrap">';
+
+  h += '<div class="card"><div class="card-head"><h2>Profile</h2></div>' +
+    setRow('Your name', 'Used in your greeting, like \u201CGood morning, Akua\u201D. Leave it empty to hide it.',
+      '<input type="text" data-setting="name" maxlength="40" value="' + esc(st.name || '') + '" placeholder="Your name" autocomplete="given-name" aria-label="Your name">') +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><h2>Appearance</h2></div>' +
+    setRow('Theme', 'Choose light, dark, or follow your device.',
+      '<select data-setting="theme" aria-label="Theme">' + optionsHTML([['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']], st.theme) + '</select>') +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><h2>Deadlines and calendar</h2></div>' +
+    setRow('Red alert when due within', 'These deadlines show in red on the banner and alerts.',
+      '<select data-setting="urgentDays" aria-label="Urgent alert days">' + optionsHTML(urgent, st.urgentDays) + '</select>') +
+    setRow('Amber alert when due within', 'Earlier heads-up for upcoming deadlines.',
+      '<select data-setting="soonDays" aria-label="Upcoming alert days">' + optionsHTML(soon, st.soonDays) + '</select>') +
+    setRow('Default due time', 'Pre-filled when you add a deadline.',
+      '<input type="time" data-setting="defaultTime" value="' + esc(st.defaultTime) + '" aria-label="Default due time">') +
+    setRow('Calendar week starts on', '',
+      '<select data-setting="weekStart" aria-label="Week starts on">' + optionsHTML([['sunday', 'Sunday'], ['monday', 'Monday']], st.weekStartsMonday ? 'monday' : 'sunday') + '</select>') +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><h2>Weekly check-in</h2></div>' +
+    setRow('Your weekly tasks', 'One per line, up to 10. Slide reminders for each course are added automatically.',
+      '<textarea data-setting="extraTasks" aria-label="Weekly tasks" maxlength="900">' + esc(st.extraTasks.join('\n')) + '</textarea>', true) +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><h2>App</h2></div>' +
+    setRow('Install on your device', isStandalone() ? 'StudyDesk is installed and running as an app.' : 'Open StudyDesk full screen from your home screen, like any other app.',
+      isStandalone() ? '<span class="badge type-project">Installed</span>' : '<button class="btn btn-ghost btn-small" data-action="install-app">' + icon('download') + '<span>Install app</span></button>') +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><h2>Your data</h2></div>' +
+    setRow('Back up', 'Save everything to a file you can keep. Large file previews are not included.',
+      '<button class="btn btn-ghost btn-small" data-action="export-backup">Export backup</button>') +
+    setRow('Restore', 'Load a backup file. This replaces what is in the app now.',
+      '<button class="btn btn-ghost btn-small" data-action="import-backup">Import backup</button>') +
+    setRow('Clear all data', 'Deletes every folder, file and deadline. Your settings are kept.',
+      '<button class="btn btn-danger btn-small" data-action="reset-all">Clear all data</button>') +
+    '</div>';
+
+  h += '<div class="card"><div class="card-head"><h2>About</h2></div>' +
+    setRow(esc(APP_INFO.NAME) + ' version ' + esc(APP_INFO.VERSION), 'Your information stays on this device.',
+      '<button class="btn btn-ghost btn-small" data-action="settings-tab" data-tab="feedback">Send feedback</button>' +
+      '<button class="btn btn-ghost btn-small" data-action="settings-tab" data-tab="privacy">Privacy policy</button>') +
+    '</div>';
+
+  return h + '</div>';
+}
+
+/* Builds the embeddable version of the Tally link (or '' if none/invalid).
+   Accepts either https://tally.so/r/ID or an https://tally.so/embed/ID link. */
+function feedbackEmbedUrl() {
+  let u = String(APP_INFO.TALLY_FORM_URL || '').trim();
+  if (!/^https:\/\//i.test(u)) return '';
+  u = u.replace('/r/', '/embed/');
+  return u + (u.indexOf('?') > -1 ? '&' : '?') + 'alignLeft=1&hideTitle=1&transparentBackground=1';
+}
+
+/* The Feedback tab: shows your Tally form, or a notice if it isn't connected yet. */
+function feedbackHTML() {
+  const embed = feedbackEmbedUrl();
+  const mail = APP_INFO.CONTACT_EMAIL ? '<a href="mailto:' + esc(APP_INFO.CONTACT_EMAIL) + '">' + esc(APP_INFO.CONTACT_EMAIL) + '</a>' : '';
+  let h = '<div class="settings-wrap"><div class="card prose"><div class="card-head"><h2>Send feedback</h2></div>' +
+    '<p class="lead">Tell us what\u2019s working and what isn\u2019t.</p>' +
+    '<p>Found a bug, or have an idea that would make ' + esc(APP_INFO.NAME) + ' better for students? Every message is read.</p>';
+  if (embed) {
+    h += '<iframe class="frame" src="' + esc(embed) + '" title="Feedback form" loading="lazy"></iframe>' +
+      '<p style="margin-top:12px"><a class="btn btn-ghost btn-small" href="' + esc(APP_INFO.TALLY_FORM_URL.trim()) + '" target="_blank" rel="noopener">Open the form in a new tab</a></p>';
+  } else {
+    h += '<div class="empty" style="margin-top:14px"><strong>The feedback form isn\u2019t available yet</strong>' +
+      (mail ? 'For now, email us at ' + mail + '.' : 'Please check back soon.') + '</div>';
+  }
+  return h + '</div></div>';
+}
+
+/* The Privacy policy tab. Edit the wording below if your app changes
+   (for example, if you ever add accounts, analytics or ads). */
+function privacyHTML() {
+  const contact = APP_INFO.CONTACT_EMAIL
+    ? 'email <a href="mailto:' + esc(APP_INFO.CONTACT_EMAIL) + '">' + esc(APP_INFO.CONTACT_EMAIL) + '</a> or use the Feedback tab'
+    : 'use the Feedback tab';
+  return '<div class="settings-wrap"><div class="card prose"><div class="card-head"><h2>Privacy policy</h2><span class="hint">Updated ' + esc(APP_INFO.PRIVACY_UPDATED) + '</span></div>' +
+    '<p class="lead">' + esc(APP_INFO.NAME) + ' keeps your information on your device. We don\u2019t have accounts, and we don\u2019t collect, upload or sell your data.</p>' +
+
+    '<h3>What the app stores</h3>' +
+    '<p>Your course folders, the files you add, your deadlines, your weekly checklist ticks and your settings. All of it is saved in your browser\u2019s local storage on this device. Files you add never leave your device.</p>' +
+
+    '<h3>What we don\u2019t do</h3>' +
+    '<ul><li>No sign-up or personal accounts.</li><li>No analytics or tracking of how you use the app.</li><li>No advertising.</li><li>No copy of your data on our servers.</li></ul>' +
+
+    '<h3>Feedback form</h3>' +
+    '<p>If you send feedback, what you type (and your email, if you give one) is submitted through Tally, a third-party form service, and reaches the app owner. Tally handles it under its own privacy policy. Please don\u2019t include anything you wouldn\u2019t want to share.</p>' +
+
+    '<h3>Installing and offline use</h3>' +
+    '<p>If you install the app, your browser keeps a copy of the app\u2019s own files on your device so it can open quickly and work offline. This copy contains no personal information.</p>' +
+
+    '<h3>Your choices</h3>' +
+    '<ul><li>Export a backup or restore one at any time in Settings.</li><li>Use Clear all data in Settings to delete everything the app holds.</li><li>Clearing your browser data or uninstalling the app also removes it.</li></ul>' +
+    '<p>Because your data lives only on your device, we can\u2019t recover it if it is lost. Back it up with Export backup.</p>' +
+
+    '<h3>Children</h3>' +
+    '<p>' + esc(APP_INFO.NAME) + ' is built for students. We don\u2019t knowingly collect personal information from anyone.</p>' +
+
+    '<h3>Changes and contact</h3>' +
+    '<p>If this policy changes, the date above is updated. Questions? ' + contact + '.</p></div></div>';
+}
+
+/* Saves all your data to a .json file on the device. */
+function exportBackup() {
+  const payload = { app: 'studydesk', version: APP_INFO.VERSION, exported: new Date().toISOString(), data: state };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'studydesk-backup-' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  toast('Backup saved to your downloads');
+}
+
+/* Reads a backup file and, after confirming, replaces the app's data with it. */
+$('importInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function () {
+    let parsed = null;
+    try { parsed = JSON.parse(reader.result); } catch (err) { parsed = null; }
+    if (!parsed || parsed.app !== 'studydesk' || !parsed.data) { toast('That file isn\u2019t a StudyDesk backup.'); return; }
+    askConfirm('Replace your data?', 'Everything currently in the app will be replaced by this backup (' + file.name + ').', 'Restore backup', function () {
+      Object.keys(blobUrls).forEach(dropFileMemory);
+      state = normalizeState(parsed.data);
+      ui.folderId = rootFolders()[0] ? rootFolders()[0].id : null;
+      saveState();
+      applySettings();
+      renderAll();
+      toast('Backup restored');
+    });
+  };
+  reader.readAsText(file);
+});
+
+
+/* =====================================================================
+   L2. INSTALLABLE APP (PWA) – "Add to home screen" pop-up
+   Installing makes StudyDesk open full screen like a normal app,
+   with no browser address bar. This needs the page to be opened from
+   an https:// address (see the notes that came with this file).
+   ===================================================================== */
+let deferredInstallPrompt = null;                    // the browser's install offer, once it arrives
+const INSTALL_DISMISS_KEY = 'studydesk.installDismissed';
+const INSTALL_REMIND_DAYS = 7;                       // how long "Not now" silences the pop-up
+
+/* True when the app is already running installed (not in a normal browser tab). */
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+/* True on iPhone/iPad, which has no automatic install button. */
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/* Draws the app icon (navy square, blue tile, white tick) and returns it as a PNG data link. */
+function makeAppIcon(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const x = c.getContext('2d');
+  x.fillStyle = '#0b1b36';
+  x.fillRect(0, 0, size, size);
+  const s = size * 0.56, o = (size - s) / 2;
+  x.fillStyle = '#2f6fed';
+  x.beginPath();
+  if (x.roundRect) x.roundRect(o, o, s, s, s * 0.24); else x.rect(o, o, s, s);
+  x.fill();
+  x.strokeStyle = '#ffffff';
+  x.lineWidth = size * 0.065;
+  x.lineCap = 'round'; x.lineJoin = 'round';
+  x.beginPath();
+  x.moveTo(size * 0.38, size * 0.51); x.lineTo(size * 0.465, size * 0.595); x.lineTo(size * 0.625, size * 0.41);
+  x.stroke();
+  return c.toDataURL('image/png');
+}
+
+/* Has the user pressed "Not now" within the last few days? */
+function installRecentlyDismissed() {
+  try {
+    const t = Number(localStorage.getItem(INSTALL_DISMISS_KEY) || 0);
+    return t && (Date.now() - t) < INSTALL_REMIND_DAYS * 86400000;
+  } catch (e) { return false; }
+}
+
+/* Remembers that the user closed the pop-up, so it doesn't nag. */
+function rememberInstallDismissed() {
+  try { localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+}
+
+/* Shows or hides the "Install app" button depending on whether the app is installed. */
+function updateInstallButton() {
+  $('installBtn').hidden = isStandalone();
+}
+
+/* Fills and opens the install pop-up with the right instructions for this device. */
+function showInstallPopup() {
+  if (isStandalone()) return;
+  const icon192 = makeAppIcon(112);
+  const head = '<div class="install-hero"><img alt="" src="' + icon192 + '"><h2 id="installTitle">Install StudyDesk</h2></div>';
+  let body;
+  if (deferredInstallPrompt) {
+    body = head + '<p style="color:var(--text-muted)">Add StudyDesk to your home screen. It opens full screen like a normal app, with no browser bar, and your data stays on this device.</p>' +
+      '<div class="dlg-actions"><button type="button" class="btn btn-ghost" data-action="install-later">Not now</button>' +
+      '<button type="button" class="btn" data-action="install-now">' + icon('download') + '<span>Install app</span></button></div>';
+  } else if (isIOS()) {
+    body = head + '<p style="color:var(--text-muted)">To install on iPhone or iPad:</p><ol class="install-steps">' +
+      '<li>Tap the Share button in Safari.</li><li>Choose Add to Home Screen.</li><li>Tap Add.</li></ol>' +
+      '<div class="dlg-actions"><button type="button" class="btn" data-action="install-later">Got it</button></div>';
+  } else {
+    body = head + '<p style="color:var(--text-muted)">Open your browser menu (the \u22EE or \u22EF button) and choose Install app or Add to Home screen.</p>' +
+      '<p style="color:var(--text-muted);margin-top:8px">If you don\u2019t see that option, open this page from its https:// web address instead of from a file saved on your device.</p>' +
+      '<div class="dlg-actions"><button type="button" class="btn" data-action="install-later">Got it</button></div>';
+  }
+  $('installBody').innerHTML = body;
+  if (!$('installDialog').open) $('installDialog').showModal();
+}
+
+/* Shows the pop-up by itself on a fresh visit (unless installed, snoozed, or another pop-up is open). */
+function maybeAutoShowInstall() {
+  if (isStandalone() || installRecentlyDismissed() || document.querySelector('dialog[open]')) return;
+  showInstallPopup();
+}
+
+/* Runs the browser's real install prompt after the user taps "Install app". */
+function runInstall() {
+  if (!deferredInstallPrompt) { showInstallPopup(); return; }
+  const promptEvent = deferredInstallPrompt;
+  deferredInstallPrompt = null;
+  $('installDialog').close();
+  promptEvent.prompt();
+  promptEvent.userChoice.then(function (choice) {
+    if (choice.outcome !== 'accepted') rememberInstallDismissed();
+  });
+}
+
+/* Sets up everything that makes the page installable. Runs once at start-up. */
+function setupPWA() {
+  /* Home-screen icon for iPhone */
+  const apple = document.createElement('link');
+  apple.rel = 'apple-touch-icon';
+  apple.href = makeAppIcon(180);
+  document.head.appendChild(apple);
+
+  /* The app manifest is built here so no extra file is needed.
+     It tells the browser the name, icon, colors and "standalone" (no browser bar). */
+  if (/^https?:$/.test(location.protocol)) {
+    const big = makeAppIcon(512), small = makeAppIcon(192);
+    const manifest = {
+      name: 'StudyDesk \u2013 Student Organizer',
+      short_name: 'StudyDesk',
+      description: 'Organize course files, deadlines and weekly reminders.',
+      start_url: location.href.split('#')[0],
+      scope: new URL('./', location.href).href,
+      display: 'standalone',
+      background_color: '#0b1b36',
+      theme_color: '#0b1b36',
+      icons: [
+        { src: small, sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: big, sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: big, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+      ]
+    };
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }));
+    document.head.appendChild(link);
+
+    /* Optional offline support: works when sw.js sits next to this file. */
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* sw.js not found: app still works online */ });
+  }
+
+  /* The browser says "this app can be installed": keep the offer and show our pop-up. */
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    updateInstallButton();
+    setTimeout(maybeAutoShowInstall, 1200);
+  });
+
+  /* After a successful install. */
+  window.addEventListener('appinstalled', function () {
+    deferredInstallPrompt = null;
+    if ($('installDialog').open) $('installDialog').close();
+    updateInstallButton();
+    toast('StudyDesk installed');
+  });
+
+  /* Remember "Not now" when the pop-up is closed any way (button, Esc, backdrop). */
+  $('installDialog').addEventListener('close', rememberInstallDismissed);
+
+  /* iPhone never fires the install event, so show the how-to once on a fresh visit. */
+  if (isIOS() && !isStandalone()) setTimeout(maybeAutoShowInstall, 2000);
+}
+
+
+/* =====================================================================
+   L4. WELCOME – asks for the student's name the first time the app opens
+   ===================================================================== */
+
+/* Shows the welcome pop-up if the name hasn't been given (or skipped) yet. */
+function maybeShowWelcome() {
+  const st = state.settings;
+  if (st.name || st.askedName) return;
+  $('welcomeIcon').src = makeAppIcon(112);
+  $('welcomeName').value = '';
+  $('welcomeError').textContent = '';
+  $('welcomeDialog').showModal();
+  setTimeout(function () { $('welcomeName').focus(); }, 60);
+}
+
+/* Saves the name (or an empty name if skipped), closes the pop-up and greets the student. */
+function finishWelcome(name) {
+  state.settings.name = name;
+  state.settings.askedName = true;
+  saveState();
+  $('welcomeDialog').close();
+  renderAll();
+  if (name) toast('Nice to meet you, ' + name + '!');
+  setTimeout(maybeAutoShowInstall, 900);   // now it's a good moment to offer installing
+}
+
+/* Pressing "Get started" with a name typed in. */
+$('welcomeForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const name = $('welcomeName').value.trim().slice(0, 40);
+  if (!name) { $('welcomeError').textContent = 'Enter your name, or choose Skip for now.'; return; }
+  finishWelcome(name);
+});
+
+/* The Esc key shouldn't dismiss the welcome question by accident. */
+$('welcomeDialog').addEventListener('cancel', function (e) { e.preventDefault(); });
+
+
+/* =====================================================================
+   M. START-UP
+   ===================================================================== */
+
+/* Runs once when the page opens: loads saved data (or example data), then draws. */
+function init() {
+  setupPWA();
+  const saved = loadState();
+  if (saved) {
+    state = saved;
+  } else {
+    state = emptyState();   // brand-new visitors start with a clean slate (no demo data)
+    saveState();
+  }
+  applySettings();
+  ui.folderId = rootFolders()[0] ? rootFolders()[0].id : null;
+  showView('dashboard');
+  maybeShowWelcome();
+
+  /* Re-check alerts every minute so "Due in 2 days" stays correct overnight */
+  setInterval(function () {
+    renderHeader(); renderBell(); renderBanner();
+    if (ui.view === 'dashboard' && !document.querySelector('dialog[open]')) renderDashboard();
+  }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>
