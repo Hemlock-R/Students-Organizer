@@ -209,7 +209,7 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
 /* =====================================================================
    7. DASHBOARD LAYOUT + "NEXT UP" HERO CARD
    ===================================================================== */
-.dash { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.dash { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
 .dash .card + .card { margin-top: 0; }
 .dash-col { display: grid; gap: 20px; }
 
@@ -268,29 +268,71 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
 .sec-label { margin: 14px 0 2px; font-size: 13.5px; font-weight: 700; color: var(--text-muted); }
 
 /* Small folder summary list on the dashboard */
-.mini-folder { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); text-align: left; }
-.mini-folder + .mini-folder { margin-top: 8px; }
-.mini-folder:hover { background: var(--surface-2); }
-.mini-folder .name { flex: 1; font-weight: 650; }
-.mini-folder .num { color: var(--text-muted); font-size: 13.5px; }
-.swatch { width: 14px; height: 14px; border-radius: 4px; background: var(--c); flex: none; }
+/* 9. SMALL FOLDER SUMMARY LIST ON THE DASHBOARD */
+#folderSummaryCard {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
 
+#folderSummaryCard .card-head {
+  grid-column: 1 / -1;
+}
+
+.mini-folder { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  width: 100%; 
+  padding: 10px; 
+  border: 1px solid var(--border); 
+  border-radius: 10px; 
+  background: var(--surface); 
+  text-align: left; 
+}
+
+.mini-folder + .mini-folder { 
+  margin-top: 0; 
+}
+
+.mini-folder:hover { 
+  background: var(--surface-2); 
+}
+
+.mini-folder .name { 
+  flex: 1; 
+  font-weight: 650; 
+}
+
+.mini-folder .num { 
+  color: var(--text-muted); 
+  font-size: 13.5px; 
+}
+
+.swatch { 
+  width: 14px; 
+  height: 14px; 
+  border-radius: 4px; 
+  background: var(--c); 
+  flex: none; 
+}
 /* =====================================================================
    10. FILES & FOLDERS PAGE
    ===================================================================== */
-.files-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
+/* Keep your working left-side styles */
+.files-layout { display: grid; grid-template-columns: 500px minmax(0, 1fr); gap: 20px; align-items: start; }
 .files-layout .card + .card { margin-top: 0; }
 
-.folder-item { display: flex; align-items: center; gap: 4px; }
+.folder-item { display: flex; align-items: center; gap: 6px; }
 .folder-item + .folder-item { margin-top: 6px; }
-.folder-pick { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-align: left; }
-.folder-pick:hover { background: var(--surface-2); }
+.folder-pick { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); transition: all 0.2s ease; }
+.folder-pick:hover { background: var(--surface-2); border-color: var(--primary); }
 .folder-pick[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); }
-.folder-pick .name { flex: 1; font-weight: 650; overflow-wrap: anywhere; }
-.folder-pick .num { font-size: 13px; color: var(--text-muted); }
+.folder-pick .name { flex: 1; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.folder-pick .num { font-size: 13.5px; color: var(--text-muted); flex-shrink: 0; }
 
-/* Drag-and-drop upload box */
-.dropzone { border: 2px dashed var(--border); border-radius: 12px; padding: 26px 16px; text-align: center; background: var(--surface-2); color: var(--text-muted); cursor: pointer; }
+/* Restore the right-side dropzone and file rows */
+.dropzone { border: 2px dashed var(--border); border-radius: 12px; padding: 26px 16px; text-align: center; background: var(--surface-2); color: var(--text-muted); transition: all 0.2s ease; }
 .dropzone:hover, .dropzone.drag-over { border-color: var(--primary); background: var(--primary-soft); color: var(--text); }
 .dropzone svg.ic { width: 28px; height: 28px; color: var(--primary); }
 .dropzone strong { display: block; color: var(--text); margin-top: 6px; }
@@ -298,13 +340,13 @@ svg.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-wid
 
 .file-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 .file-row + .file-row { margin-top: 8px; }
-.file-ext { width: 42px; height: 42px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; font-size: 11.5px; font-weight: 800; flex: none; }
+.file-row:hover { background: var(--surface-2); }
+.file-ext { width: 42px; height: 42px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
 .file-info { flex: 1; min-width: 0; }
 .file-info strong { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-info span { font-size: 13px; color: var(--text-muted); }
 .folder-title { display: flex; align-items: center; gap: 10px; }
 .folder-title h2 { font-size: 20px; }
-
 /* =====================================================================
    11. CALENDAR PAGE
    ===================================================================== */
@@ -525,7 +567,7 @@ dialog::backdrop { background: rgba(8, 20, 45, .6); }
 
 /* =====================================================================
    12g. COLLAPSIBLE FOLDER TREE (arrow, "View more")
-   ===================================================================== */
+   ============================================================ */
 .chev { display: grid; place-items: center; color: var(--text-muted); transition: transform .15s; flex: none; }
 .chev.open { transform: rotate(180deg); }
 .view-more { display: block; margin: 4px 0 0 calc(var(--depth, 0) * 14px + 8px); padding: 5px 10px; background: none; border: 0; border-radius: 6px; color: var(--primary); font-weight: 650; font-size: 13.5px; }
