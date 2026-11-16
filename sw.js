@@ -4,7 +4,7 @@
    It saves a copy of the page after the first visit so the app still
    opens without internet. Change CACHE_NAME to force an update.
    ===================================================================== */
-const CACHE_NAME = 'studydesk-v13';
+const CACHE_NAME = 'studydesk-v14';
 
 /* On install: take over right away and cache the app's folder page. */
 self.addEventListener('install', function (event) {

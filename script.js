@@ -2382,7 +2382,7 @@
       { id: 'countdown', name: 'Next deadline', desc: 'A live countdown to your next deadline.', render: widgetCountdown },
       { id: 'today', name: 'Due today', desc: 'Everything due today or overdue.', render: widgetToday },
       { id: 'week', name: 'This week', desc: 'Deadlines ahead and weekly check-in progress.', render: widgetWeek },
-      { id: 'focus', name: 'Focus timer', desc: 'A study timer with 15, 25 and 45 minute options.', render: widgetFocus },
+      { id: 'focus', name: 'Focus timer', desc: 'A study timer with 15, 30, 45 and 60 minute options.', render: widgetFocus },
       { id: 'note', name: 'Quick note', desc: 'A scratch pad that saves as you type.', render: widgetNote }
     ];
 
@@ -2505,7 +2505,7 @@
 
     /* Widget: focus timer. */
     function widgetFocus() {
-      const chips = [15, 25, 45].map(function (m) {
+      const chips = [15, 30, 45, 60].map(function (m) {
         return '<button class="w-chip ' + (timer.len === m * 60 ? 'on' : '') + '" data-action="timer-len" data-min="' + m + '">' + m + ' min</button>';
       }).join('');
       return '<div class="widget"><div class="w-label">Focus timer</div><div class="w-big" data-live="timer">' + timerText() + '</div>' +
