@@ -56,7 +56,7 @@
          Leave it empty ('') and the Feedback tab shows
          "not connected yet" instead.
          ------------------------------------------------------------------ */
-      TALLY_FORM_URL: '',   // <-- PASTE YOUR TALLY LINK HERE
+      TALLY_FORM_URL: 'https://tally.so/r/NqXDdl',   // <-- PASTE YOUR TALLY LINK HERE
 
       /* Optional: a contact email shown in the Privacy policy and Feedback tab. */
       CONTACT_EMAIL: '',    // <-- e.g. 'hello@yourdomain.com'
