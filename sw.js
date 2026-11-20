@@ -1,40 +1,46 @@
-/* =====================================================================
-   StudyDesk service worker (optional, enables install + offline use)
-   Keep this file in the SAME folder as the app page, named sw.js.
-   It saves a copy of the page after the first visit so the app still
-   opens without internet. Change CACHE_NAME to force an update.
-   ===================================================================== */
-const CACHE_NAME = 'studydesk-v16';
+/* Optional offline cache. Bump CACHE_NAME to update it. */
+const CACHE_NAME = 'studydesk-v20';
+const APP_SHELL = ['./', './style.css', './script.js'];
+const APP_SHELL_URLS = APP_SHELL.map(function (path) { return new URL(path, self.location.href).href; });
 
-/* On install: take over right away and cache the app's folder page. */
+/* Activate and cache the app page. */
 self.addEventListener('install', function (event) {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then(function (c) { return c.add('./').catch(function () {}); }));
+  event.waitUntil(caches.open(CACHE_NAME).then(function (c) { return c.addAll(APP_SHELL); }));
 });
 
-/* On activate: delete old caches from earlier versions. */
+/* Remove old caches. */
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys()
-      .then(function (keys) { return Promise.all(keys.filter(function (k) { return k !== CACHE_NAME; }).map(function (k) { return caches.delete(k); })); })
+      .then(function (keys) {
+        return Promise.all(keys.filter(function (k) { return k.indexOf('studydesk-v') === 0 && k !== CACHE_NAME; })
+          .map(function (k) { return caches.delete(k); }));
+      })
       .then(function () { return self.clients.claim(); })
   );
 });
 
-/* On every request: try the network first (so updates show up),
-   save a copy, and fall back to the saved copy when offline. */
+/* Prefer network; use cache offline. */
 self.addEventListener('fetch', function (event) {
   const req = event.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  const isShellResource = APP_SHELL_URLS.indexOf(req.url) !== -1;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin ||
+      (!isShellResource && req.mode !== 'navigate')) return;
   event.respondWith(
     fetch(req)
       .then(function (res) {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then(function (c) { c.put(req, copy); });
+        if (res.ok) {
+          event.waitUntil(caches.open(CACHE_NAME).then(function (c) { return c.put(req, res.clone()); })
+            .catch(function (error) { console.warn('StudyDesk cache update failed', error); }));
+        }
         return res;
       })
       .catch(function () {
-        return caches.match(req).then(function (hit) { return hit || caches.match('./'); });
+        return caches.match(req).then(function (hit) {
+          if (hit) return hit;
+          return req.mode === 'navigate' ? caches.match('./') : Response.error();
+        });
       })
   );
 });

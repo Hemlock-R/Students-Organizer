@@ -1,23 +1,18 @@
-/* =====================================================================
-       A. APP SETTINGS – the easy-to-edit options live here
-       ===================================================================== */
+/* A. App settings */
     const APP_SETTINGS = {
-      // A deadline this many days away (or fewer) shows a RED "urgent" alert.
+      // Urgent deadline threshold, in days.
       URGENT_DAYS: 2,
-      // A deadline this many days away (or fewer) shows an AMBER "coming up" alert.
+      // Upcoming deadline threshold, in days.
       SOON_DAYS: 7,
       // false = calendar weeks start on Sunday, true = on Monday.
       WEEK_STARTS_ON_MONDAY: false,
       // Time pre-filled in the deadline form (24-hour format, HH:MM).
       DEFAULT_DUE_TIME: '23:59',
-      // The biggest single file the app will accept (in bytes). Files are kept in the
-      // browser's IndexedDB database, which holds far more than the old 5 MB limit.
-      // The real ceiling is the free space on the student's phone.
+      // Maximum upload size in bytes.
       MAX_FILE_BYTES: 200 * 1024 * 1024,
-      // Files up to this size are also packed inside "Export backup" files.
-      // (Bigger files stay on the device only, so a backup file never gets huge.)
+      // Maximum file size included in backups.
       MAX_BACKUP_FILE_BYTES: 2 * 1024 * 1024,
-      // Extra items that appear on the weekly checklist. Add or remove lines freely.
+      // Extra weekly checklist items.
       EXTRA_WEEKLY_TASKS: [
         'Check each syllabus for new deadlines',
         'Review next week\u2019s calendar',
@@ -25,83 +20,33 @@
       ],
       // The kinds of deadline you can pick in the form.
       DEADLINE_TYPES: ['Assignment', 'Quiz', 'Exam', 'Project', 'Other'],
-      // How many folder levels are allowed (4 = main folder + 3 levels of subfolders).
+      // Maximum folder depth.
       MAX_FOLDER_DEPTH: 4,
-      // Folder colors to choose from (also used to color-code the calendar).
+      // Folder and calendar colors.
       FOLDER_COLORS: ['#2f6fed', '#0ea5a4', '#8b5cf6', '#e0731f', '#d6336c', '#4d9a2f'],
-      // Show the backup reminder banner after this many days without a backup (or a tap on "Later").
+      // Days before showing another backup reminder.
       BACKUP_REMIND_DAYS: 14,
       // A class alert turns RED (urgent) this many minutes before the class begins.
       CLASS_ALERT_MINUTES: 60,
-      // Class alerts (amber, with a live countdown) start this many hours before the class: 24 = a day ahead.
+      // Hours before class to start alerts.
       CLASS_ALERT_HOURS: 24
     };
 
-    /* =====================================================================
-       A2. APP INFO – name, version, feedback form, contact details
-       ===================================================================== */
+    /* A2. App info */
     const APP_INFO = {
       NAME: 'StudyDesk',
       VERSION: '1.3.0',
 
-      /* ------------------------------------------------------------------
-         HOW TO CONNECT YOUR TALLY FEEDBACK FORM
-           1. Go to tally.so and create your form (e.g. name, email,
-              "What can we improve?").
-           2. Click Publish, then Share, and copy the link.
-              It looks like:  https://tally.so/r/abc123
-           3. Paste that link between the quotes on the next line.
-         The app turns it into an embedded form on Settings > Feedback
-         automatically, and adds an "Open in a new tab" button too.
-         Leave it empty ('') and the Feedback tab shows
-         "not connected yet" instead.
-         ------------------------------------------------------------------ */
+      /* Set a Tally form URL to enable Settings > Feedback. */
       TALLY_FORM_URL: 'https://tally.so/r/NqXDdl',   // <-- PASTE YOUR TALLY LINK HERE
 
-      /* Optional: a contact email shown in the Privacy policy and Feedback tab. */
+      /* Optional contact shown on the Feedback and Privacy tabs. */
       CONTACT_EMAIL: '',    // <-- e.g. 'hello@yourdomain.com'
 
-      /* Update this date whenever you change the Privacy policy text. */
-      PRIVACY_UPDATED: 'October 28, 2026',
+      /* Update when the Privacy policy changes. */
+      PRIVACY_UPDATED: 'November 20, 2026',
 
-      /* ==================================================================
-         DONATIONS (optional – students can support the app, never forced)
-    
-         The "Donate" button, the donate pop-up form and the occasional
-         "Donate or Ignore" banner all use the settings below.
-    
-         STEP 1 – ADD YOUR PAYMENT LINK (required for donations to work)
-           • Create a payment link / payment page with a provider you like.
-             For Ghana, Paystack and Flutterwave both offer simple payment
-             pages that accept cards and mobile money. Buy Me a Coffee and
-             PayPal.me also work. (Menu names change, but most providers call
-             it a "payment link" or "payment page". Choose "customer can
-             enter any amount" if offered.)
-           • Copy the link and paste it into DONATE_URL below.
-    
-         STEP 2 – (OPTIONAL) PASS THE AMOUNT TO THE PAYMENT PAGE
-           Some providers let the link carry an amount, for example
-           https://example.com/pay?amount=10. If yours does, put the word
-           they use (like 'amount') in DONATE_AMOUNT_PARAM. If the provider
-           counts in the smallest unit (pesewas/cents), set
-           DONATE_AMOUNT_MULTIPLIER to 100. Check your provider's help pages
-           for the exact name. If you leave DONATE_AMOUNT_PARAM empty, the
-           donor simply types the amount on your payment page.
-    
-         STEP 3 – GET THE DONOR DETAILS SO YOU CAN THANK THEM
-           The app has no server, so the name/email/message from the donate
-           form need somewhere to go. The easiest free option:
-             1. Make a form at formspree.io (or any service that accepts
-                a form POST and emails it to you).
-             2. Copy its address, which looks like
-                https://formspree.io/f/abcd1234
-             3. Paste it into DONATE_INFO_ENDPOINT below.
-           Each donor's details will then arrive in your email. If you leave
-           this empty, the details are NOT sent anywhere. (Your payment
-           provider's dashboard also shows who paid.)
-           Note: the form shows what someone intended to give. Always
-           confirm the real payment in your provider's dashboard.
-         ================================================================== */
+      /* Optional donations: configure the payment URL and donor-details endpoint below. */
       DONATE_ENABLED: true,           // set to false to hide every donate button and banner
       DONATE_URL: '',                 // <-- PASTE YOUR PAYMENT LINK HERE (must start with https://)
       DONATE_AMOUNT_PARAM: '',        // optional, e.g. 'amount'
@@ -110,15 +55,14 @@
       DONATE_CURRENCY: 'GHS',         // shown next to the amounts
       DONATE_AMOUNTS: [5, 10, 20, 50],// quick amount buttons in the donate form
 
-      /* How often the polite "Donate or Ignore" banner appears */
+      /* Donation banner timing. */
       DONATE_FIRST_AFTER_OPENS: 4,    // not before the 4th time the app is opened
       DONATE_REMIND_EVERY_DAYS: 14,   // then at most once every 14 days
       DONATE_IGNORE_SNOOZE_DAYS: 30,  // after tapping Ignore, stay quiet for 30 days
       DONATED_SNOOZE_DAYS: 90         // after someone donates, stay quiet for 90 days
     };
 
-    /* The starting values for every option on the Settings page.
-       (Copied from APP_SETTINGS above, so edit those to change the defaults.) */
+    /* Default values for Settings. */
     const DEFAULT_SETTINGS = {
       name: '',                                          // the student's name, used in the greeting
       askedName: false,                                  // true once the welcome question has been answered or skipped
@@ -133,9 +77,7 @@
 
 
 
-    /* =====================================================================
-       B. APP STATE – everything the app remembers
-       ===================================================================== */
+    /* B. App state */
     let state = emptyState();          // folders, files, deadlines, checklist ticks
     const runtimeFiles = {};           // only used if IndexedDB is blocked: files kept in memory for this visit
     const blobUrls = {};               // temporary preview links for the file viewer (fileId -> url)
@@ -167,9 +109,7 @@
     }
 
 
-    /* =====================================================================
-       C. SMALL HELPER FUNCTIONS
-       ===================================================================== */
+    /* C. Helpers */
 
     /* Shortcut for document.getElementById. */
     function $(id) { return document.getElementById(id); }
@@ -177,7 +117,7 @@
     /* Makes a short random ID for new folders, files and deadlines. */
     function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-    /* Makes user-typed text safe to place inside HTML (prevents broken layout / injection). */
+    /* Escapes user text before adding it to HTML. */
     function esc(s) {
       return String(s).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -234,7 +174,7 @@
       return name.indexOf('.') > -1 ? name.split('.').pop().slice(0, 4).toUpperCase() : 'FILE';
     }
 
-    /* Which office-style files a browser can't preview? Returns "PowerPoint", "Word", "Excel" or "" (previewable / unknown). */
+    /* Returns the office-file type that requires downloading, if any. */
     function downloadOnlyKind(name) {
       const ext = (String(name).split('.').pop() || '').toLowerCase();
       if (/^(ppt|pptx|pps|ppsx|odp|key)$/.test(ext)) return 'PowerPoint';
@@ -243,7 +183,7 @@
       return '';
     }
 
-    /* The message shown in the viewer for a file that can't be previewed (with the quick way to get a PDF). */
+    /* Viewer message for files that cannot be previewed. */
     function noPreviewNote(name) {
       const kind = downloadOnlyKind(name);
       if (kind === 'PowerPoint') {
@@ -259,7 +199,7 @@
     /* Finds a folder by its ID (or undefined). */
     function folderById(id) { return state.folders.find(function (f) { return f.id === id; }); }
 
-    /* ---- Folder tree helpers: main folders have no parentId; subfolders point to their parent ---- */
+    /* Folder tree helpers */
 
     /* Folders directly inside a parent ('' = the main, top-level folders). */
     function childFolders(parentId) {
@@ -352,26 +292,13 @@
     }
 
 
-    /* =====================================================================
-       D. STORAGE ENGINE – everything is saved in IndexedDB
-       ---------------------------------------------------------------------
-       IndexedDB is a database built into the browser. It lives on the student's
-       own device and holds far more than the old "localStorage" (about 5 MB).
-       Our database has two "stores" (think of them as two drawers):
-         • "kv"    – small values: folders, deadlines, settings, reminders, notes
-         • "files" – the real uploaded files, saved as they are (not as text)
-    
-       HOW TO CHANGE THINGS
-         • Start completely fresh ...... change DB_NAME below (old data is ignored)
-         • Save a new small value ...... kvSet('myKey', anyValue)   and read it with kvGet('myKey', fallback)
-         • Save / read / delete a file . putFileBlob(id, file) / getFileBlob(id) / deleteFileBlob(id)
-       ===================================================================== */
+    /* D. IndexedDB storage */
     const DB_NAME = 'studydesk';        // name of the database inside the browser
     const DB_VERSION = 1;               // only raise this if you add another "store" in openDatabase()
     const STORE_KV = 'kv';              // drawer for small values
     const STORE_FILES = 'files';        // drawer for uploaded files
 
-    /* The names (keys) of the small values we save in the "kv" drawer. */
+    /* Keys for saved values. */
     const KEY_STATE = 'state';                  // folders, files list, deadlines, checklist ticks, settings
     const KEY_UI = 'ui';                        // which folders were left open
     const KEY_DONATE = 'donate';                // donate-banner timing
@@ -381,15 +308,13 @@
     const KEY_INSTALL = 'installDismissed';     // when "Install app" was last dismissed
     const KEY_INSTALLED = 'appInstalled';       // true once the browser reported the app was installed (hides the Install button)
 
-    /* Where older versions of the app kept things (localStorage). Used once, to move
-       existing students' data into IndexedDB. Safe to leave as it is. */
+    /* Legacy localStorage keys used during migration. */
     const LEGACY_KEYS = {
       state: 'studydesk.v1', ui: 'studydesk.ui', donate: 'studydesk.donate',
       note: 'studydesk.note', installDismissed: 'studydesk.installDismissed'
     };
 
-    /* Opens (or creates) the database. Resolves with the database, or null if the
-       browser doesn't allow IndexedDB (for example some private windows). */
+    /* Opens the database, or returns null if IndexedDB is unavailable. */
     function openDatabase() {
       return new Promise(function (resolve) {
         if (!window.indexedDB) { resolve(null); return; }
@@ -407,7 +332,7 @@
       });
     }
 
-    /* Reads every small value from the database into kvCache (done once at start-up). */
+    /* Loads saved values into the startup cache. */
     function loadAllValues() {
       return new Promise(function (resolve) {
         if (!db) { resolve(); return; }
@@ -436,7 +361,7 @@
       return kvCache[key] === undefined ? fallback : kvCache[key];
     }
 
-    /* Saves a small value. The app keeps working straight away; the database write finishes a moment later. */
+    /* Saves a small value and updates the cache immediately. */
     function kvSet(key, value) {
       kvCache[key] = value;
       return new Promise(function (resolve) {
@@ -526,20 +451,20 @@
       return Promise.resolve(false);
     }
 
-    /* Saves everything (folders, deadlines, settings...). Uploaded files are saved separately by putFileBlob. */
+    /* Saves app state; file contents are stored separately. */
     function saveState() {
       kvSet(KEY_STATE, JSON.stringify(state));
       return true;
     }
 
-    /* Loads the saved data. Returns the data, or null if nothing was saved yet (a brand-new student). */
+    /* Loads saved state, or null for a new user. */
     function loadState() {
       const raw = kvGet(KEY_STATE, null);
       if (!raw) return null;
       try { return normalizeState(JSON.parse(raw)); } catch (e) { return null; }
     }
 
-    /* True if the old version's example data (CICS 111, MATH 173...) is still sitting untouched. */
+    /* Checks whether the old demo data is unchanged. */
     function looksLikeDemoData(d) {
       const names = (d.folders || []).map(function (f) { return f && f.name; });
       const titles = (d.deadlines || []).map(function (x) { return x && x.title; });
@@ -548,29 +473,58 @@
         hasAll(titles, ['Homework 3', 'Quiz 2', 'Essay draft', 'Midterm exam']) && !(d.files || []).length;
     }
 
-    /* One-time move of data from the old localStorage into IndexedDB (existing students only).
-       Example data from older versions is dropped so everyone gets a fresh start. */
+    /* Migrates existing users' data from localStorage to IndexedDB once. */
     async function migrateLegacyStorage() {
       let raw = null;
       try { raw = localStorage.getItem(LEGACY_KEYS.state); } catch (e) { return; }
+      let legacyData = null;
+      let migrationSucceeded = true;
+      if (raw) {
+        try { legacyData = JSON.parse(raw); } catch (e) { migrationSucceeded = false; }
+      }
+
       if (raw && kvCache[KEY_STATE] === undefined) {
-        let data = null;
-        try { data = JSON.parse(raw); } catch (e) { data = null; }
+        let data = legacyData;
         if (data && looksLikeDemoData(data)) data = { settings: data.settings };   // keep preferences, drop the demo
         if (data) {
-          /* Older versions kept small files as text inside the data; turn them into real files. */
+          /* Convert legacy data URLs into stored files. */
           const files = Array.isArray(data.files) ? data.files : [];
           for (let i = 0; i < files.length; i++) {
             const f = files[i];
             if (f && typeof f.data === 'string' && f.data.indexOf('data:') === 0) {
-              try { await putFileBlob(f.id, await (await fetch(f.data)).blob()); f.stored = true; } catch (e) { f.stored = false; }
+              try {
+                f.stored = await putFileBlob(f.id, await (await fetch(f.data)).blob());
+              } catch (e) {
+                f.stored = false;
+              }
+              if (!f.stored) migrationSucceeded = false;
             } else if (f) { f.stored = false; }
             if (f) delete f.data;
           }
-          await kvSet(KEY_STATE, JSON.stringify(data));
+          if (!await kvSet(KEY_STATE, JSON.stringify(data))) migrationSucceeded = false;
+        }
+      } else if (raw && legacyData && kvCache[KEY_STATE] !== undefined) {
+        let current = null;
+        try { current = JSON.parse(kvCache[KEY_STATE]); } catch (e) { migrationSucceeded = false; }
+        if (current && Array.isArray(current.files) && Array.isArray(legacyData.files)) {
+          let stateChanged = false;
+          for (let i = 0; i < legacyData.files.length; i++) {
+            const oldFile = legacyData.files[i];
+            if (!oldFile || typeof oldFile.data !== 'string' || oldFile.data.indexOf('data:') !== 0) continue;
+            const currentFile = current.files.find(function (f) { return f && f.id === oldFile.id; });
+            if (!currentFile || currentFile.stored !== false) continue;
+            try {
+              currentFile.stored = await putFileBlob(oldFile.id, await (await fetch(oldFile.data)).blob());
+            } catch (e) {
+              currentFile.stored = false;
+            }
+            if (currentFile.stored) stateChanged = true;
+            else migrationSucceeded = false;
+          }
+          if (stateChanged && !await kvSet(KEY_STATE, JSON.stringify(current))) migrationSucceeded = false;
         }
       }
-      /* Small values: copy across if we don't have them yet. */
+      /* Copy other legacy values that are not saved yet. */
       const pairs = [[LEGACY_KEYS.ui, KEY_UI, true], [LEGACY_KEYS.donate, KEY_DONATE, true], [LEGACY_KEYS.note, KEY_NOTE, false], [LEGACY_KEYS.installDismissed, KEY_INSTALL, 'num']];
       for (let i = 0; i < pairs.length; i++) {
         let v = null;
@@ -579,21 +533,22 @@
           let val = v;
           if (pairs[i][2] === true) { try { val = JSON.parse(v); } catch (e) { val = {}; } }
           if (pairs[i][2] === 'num') val = Number(v) || 0;
-          await kvSet(pairs[i][1], val);
+          if (!await kvSet(pairs[i][1], val)) migrationSucceeded = false;
         }
       }
-      /* Everything is safely in IndexedDB now: remove the old copies. */
-      Object.keys(LEGACY_KEYS).forEach(function (k) { try { localStorage.removeItem(LEGACY_KEYS[k]); } catch (e) { /* ignore */ } });
+      /* Remove legacy copies after migration. */
+      if (migrationSucceeded) {
+        Object.keys(LEGACY_KEYS).forEach(function (k) { try { localStorage.removeItem(LEGACY_KEYS[k]); } catch (e) { /* ignore */ } });
+      }
     }
 
-    /* Cleans up loaded or imported data so missing or odd values can't break the app.
-       Anything that isn't the expected shape is dropped or replaced with a safe default. */
+    /* Validates loaded or imported data and applies safe defaults. */
     function normalizeState(data) {
       const st = emptyState();
       if (!data || typeof data !== 'object') return st;
       const folders = (Array.isArray(data.folders) ? data.folders : []).filter(function (f) { return f && typeof f.id === 'string' && typeof f.name === 'string'; })
         .map(function (f) { return { id: f.id, name: f.name, parentId: typeof f.parentId === 'string' ? f.parentId : '', color: APP_SETTINGS.FOLDER_COLORS.indexOf(f.color) > -1 ? f.color : APP_SETTINGS.FOLDER_COLORS[0] }; });
-      /* Make sure every parent exists and no folder is inside itself (older saves had no parents) */
+      /* Remove invalid, missing, or cyclic parent references. */
       const ids = {};
       folders.forEach(function (f) { ids[f.id] = f; });
       folders.forEach(function (f) { if (f.parentId && (!ids[f.parentId] || f.parentId === f.id)) f.parentId = ''; });
@@ -623,9 +578,7 @@
       return st;
     }
 
-    /* =====================================================================
-       E. DEADLINE LOGIC – sorting, countdowns, and alerts
-       ===================================================================== */
+    /* E. Deadline logic */
 
     /* Returns all deadlines sorted by date, then time. */
     function sortedDeadlines() {
@@ -639,11 +592,7 @@
       return sortedDeadlines().filter(function (d) { return d.date === dateStr; });
     }
 
-    /* Works out how urgent a deadline is. Returns:
-       diff    – whole days until due (negative = past)
-       overdue – true if the due time has already passed
-       level   – 'done' | 'danger' | 'warn' | 'calm'
-       label   – friendly text like "Due in 2 days"        */
+    /* Returns the deadline's countdown, status, and display label. */
     function dueInfo(d) {
       const diff = dayDiff(todayStr(), d.date);
       const at = d.time ? ' at ' + formatTime(d.time) : '';
@@ -682,8 +631,7 @@
       return !!(wk && wk[key]);
     }
 
-    /* Builds the list of alerts: urgent deadlines, upcoming deadlines, and
-       "you haven't uploaded this week's slides" reminders. */
+    /* Builds deadline, class, and weekly-slide alerts. */
     function buildAlerts() {
       const out = [];
       state.deadlines.forEach(function (d) {
@@ -700,8 +648,7 @@
           deadlineId: d.id
         });
       });
-      /* Classes: an alert starts CLASS_ALERT_HOURS before each class (a day ahead) with a live countdown.
-         Amber at first, red in the last CLASS_ALERT_MINUTES. A class in progress is listed as "In session". */
+      /* Add class alerts with a live countdown. */
       const nowMs = Date.now();
       state.timetable.forEach(function (c) {
         for (let off = 0; off <= 1; off++) {
@@ -745,11 +692,9 @@
     }
 
 
-    /* =====================================================================
-       F. PAGE SWITCHING & HEADER
-       ===================================================================== */
+    /* F. Navigation and header */
 
-    /* Shows one of the three pages ('dashboard', 'files', 'calendar'). */
+    /* Shows the requested page. */
     function showView(name) {
       ui.view = name;
       ['dashboard', 'files', 'calendar', 'timetable', 'settings'].forEach(function (v) {
@@ -824,9 +769,7 @@
     }
 
 
-    /* =====================================================================
-       G. DASHBOARD PAGE
-       ===================================================================== */
+    /* G. Dashboard */
 
     /* Builds one deadline row (used on the dashboard and under the calendar). */
     function deadlineRowHTML(d) {
@@ -843,7 +786,7 @@
         '</div></li>';
     }
 
-    /* Draws the whole dashboard: hero, upcoming list, checklist, folders (alerts are behind the bell). */
+    /* Draws the dashboard sections. */
     function renderDashboard() {
       renderWidgets();
       renderHero();
@@ -872,9 +815,7 @@
         '<button class="btn" data-action="view-deadline" data-id="' + esc(next.id) + '">View details</button></div>';
     }
 
-    /* ---- ALERTS POP-UP (opened by the bell button in the top bar) ----
-       The dashboard stays uncluttered: the full alert list lives behind the bell.
-       HOW TO CHANGE: the wording is below; how early alerts start is URGENT_DAYS / SOON_DAYS in APP_SETTINGS. */
+    /* Alerts pop-up */
 
     /* Builds the list of alerts (or a friendly "all clear" message). */
     function alertListHTML() {
@@ -966,11 +907,9 @@
     }
 
 
-    /* =====================================================================
-       H. FILES & FOLDERS PAGE
-       ===================================================================== */
+    /* H. Files and folders */
 
-    /* ---- Remembering which folders are open (saved on this device) ---- */
+    /* Remember expanded folders. */
 
     /* Loads the list of folders that were left open last time. */
     function loadUiPrefs() {
@@ -996,7 +935,7 @@
       saveUiPrefs();
     }
 
-    /* The selected folder plus all of its parents (these are never hidden by "View more"). */
+    /* Returns the selected folder and its parents. */
     function selectedPathIds() {
       const out = [];
       let f = folderById(ui.folderId), g = 0;
@@ -1004,10 +943,7 @@
       return out;
     }
 
-    /* Builds the folder tree for the left-hand list (calls itself for each open level).
-       - Tap a folder to open it (its subfolders appear) or tap again to close it.
-       - Long lists show only the first few; "View more" reveals the rest.
-       Change the two numbers below to show more or fewer before "View more". */
+    /* Builds the expandable folder tree. */
     function folderTreeHTML(parentId) {
       const kids = childFolders(parentId);
       const limit = parentId ? 5 : 8;                       // <-- how many to show before "View more"
@@ -1038,7 +974,7 @@
       return out;
     }
 
-    /* Draws the folder tree (left) and the open folder with its subfolders and files (right). */
+    /* Draws the folder tree and selected folder. */
     function renderFiles() {
       if (!folderById(ui.folderId)) { const r = rootFolders()[0]; ui.folderId = r ? r.id : null; }
 
@@ -1106,8 +1042,7 @@
       $('folderDetailCard').innerHTML = html;
     }
 
-    /* Adds chosen/dropped files to a folder. Each file is saved in IndexedDB, so it is
-       still there (and fully viewable) after the app is closed and reopened. */
+    /* Adds files to a folder and saves them in IndexedDB. */
     function handleFiles(fileList, folderId) {
       const folder = folderById(folderId);
       if (!folder) { toast('Create a folder first, then upload.'); return; }
@@ -1135,7 +1070,7 @@
       });
     }
 
-    /* Works out what a file is from its saved type or, if that is missing, from its extension. */
+    /* Detects file type from its MIME type or extension. */
     function guessMime(f, blob) {
       const t = String(f.type || blob.type || '').toLowerCase();
       if (t && t !== 'application/octet-stream') return t;
@@ -1146,7 +1081,7 @@
       return map[ext] || t;
     }
 
-    /* Phones and tablets can't show a PDF inside a pop-up, so they get the page-by-page viewer below. */
+    /* Use the page viewer for mobile PDFs. */
     function canShowPdfInline() {
       return !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.pdfViewerEnabled !== false;
     }
@@ -1185,8 +1120,7 @@
       }
     }
 
-    /* Opens the viewer pop-up for one file: reads it from IndexedDB, then shows it right here.
-       Shows images, PDFs, video, audio and text. Word/PowerPoint/Excel files can't be previewed in a browser. */
+    /* Opens a saved file in the viewer when its type is supported. */
     function openFileViewer(id) {
       const f = state.files.find(function (x) { return x.id === id; });
       if (!f) return;
@@ -1204,7 +1138,7 @@
           return;
         }
         const type = guessMime(f, blob);
-        /* Give the file its real type, otherwise the browser downloads it instead of showing it */
+        /* Set the MIME type so the browser can preview the file. */
         if (!blobUrls[id]) blobUrls[id] = URL.createObjectURL(type ? new Blob([blob], { type: type }) : blob);
         const src = blobUrls[id];
         const previewable = /^(image|video|audio)\//.test(type) || type === 'application/pdf';
@@ -1257,7 +1191,7 @@
       });
     }
 
-    /* Builds the "Where should it go?" choices: top level, or inside any existing folder. */
+    /* Builds folder destination options. */
     function folderParentOptions(selected) {
       let out = '<option value=""' + (!selected ? ' selected' : '') + '>Main folder (top level)</option>';
       (function walk(pid) {
@@ -1279,7 +1213,7 @@
       $('folderDlgTitle').textContent = isSub ? 'New subfolder' : 'New main folder';
     }
 
-    /* Opens the "New folder" pop-up. Pass a parent folder id to start a subfolder inside it. */
+    /* Opens the folder dialog, optionally inside a parent. */
     function openFolderModal(parentId) {
       $('folderForm').reset();
       $('folderError').textContent = '';
@@ -1359,9 +1293,7 @@
     }
 
 
-    /* =====================================================================
-       I. CALENDAR PAGE
-       ===================================================================== */
+    /* I. Calendar */
 
     /* Draws the month grid and the list of that month's deadlines. */
     function renderCalendar() {
@@ -1414,9 +1346,7 @@
     }
 
 
-    /* =====================================================================
-       J. ADD / EDIT / DELETE DEADLINES
-       ===================================================================== */
+    /* J. Deadline editing */
 
     /* Opens the deadline pop-up. Pass {date} to add on a day, or {id} to edit. */
     function openDeadlineModal(opts) {
@@ -1516,9 +1446,7 @@
     }
 
 
-    /* =====================================================================
-       J2. VIEW A DEADLINE (read-only) – Edit is a button inside this pop-up
-       ===================================================================== */
+    /* J2. Read-only deadline view */
 
     /* Opens the read-only details pop-up for a deadline. */
     function openViewDialog(id) {
@@ -1557,9 +1485,7 @@
     }
 
 
-    /* =====================================================================
-       K. CONFIRM POP-UP & RESET
-       ===================================================================== */
+    /* K. Confirmation and reset */
 
     /* Shows the "Are you sure?" pop-up; runs onOk if the user confirms. */
     function askConfirm(title, message, okText, onOk) {
@@ -1573,6 +1499,10 @@
     /* Wipes all data (after confirming). */
     function resetAll() {
       askConfirm('Clear all data?', 'This deletes every folder, file, and deadline stored on this device. It cannot be undone.', 'Clear everything', function () {
+        let legacyStorageCleared = true;
+        Object.keys(LEGACY_KEYS).forEach(function (k) {
+          try { localStorage.removeItem(LEGACY_KEYS[k]); } catch (e) { legacyStorageCleared = false; }
+        });
         releaseAllPreviews();
         clearAllFileBlobs();                   // delete every uploaded file from IndexedDB
         kvDelete(KEY_NOTE);                    // and the quick note
@@ -1581,14 +1511,13 @@
         state.settings = keepSettings;
         ui.folderId = null;
         ui.expanded.clear(); saveUiPrefs();
-        saveState(); renderAll(); toast('All data cleared');
+        saveState(); renderAll();
+        toast(legacyStorageCleared ? 'All data cleared' : 'Data cleared, but old browser data could not be removed');
       });
     }
 
 
-    /* =====================================================================
-       L. EVENT HANDLING – one listener decides what every click does
-       ===================================================================== */
+    /* L. Event handling */
 
     /* Every clickable element carries data-action="something". This function
        looks at that name and runs the matching feature. */
@@ -1599,12 +1528,13 @@
 
       const el = e.target.closest('[data-action]');
       if (!el) return;
+      const action = el.dataset.action;
       const id = el.dataset.id;
 
-      /* Tapping View or Upload inside the Alerts pop-up: close the pop-up first, then go there. */
+      /* Close alerts before navigating. */
       if (el.closest('#alertsDialog') && /^(view-deadline|goto-folder|nav)$/.test(el.dataset.action)) $('alertsDialog').close();
 
-      switch (el.dataset.action) {
+      switch (action) {
         case 'nav': showView(el.dataset.view); break;
         case 'go-alerts': openAlertsDialog(); break;
         case 'add-deadline': openDeadlineModal({ date: todayStr() }); break;
@@ -1660,6 +1590,14 @@
         case 'close-dialog': el.closest('dialog').close(); break;
         case 'reset-all': resetAll(); break;
       }
+
+      if (window.umami && typeof window.umami.track === 'function') {
+        if (action === 'add-deadline') {
+          window.umami.track('click-add-deadline');
+        } else if (action === 'export-backup' || action === 'backup-export') {
+          window.umami.track('click-export-backup');
+        }
+      }
     });
 
     /* Lets keyboard users press Enter or Space on calendar days and the upload box. */
@@ -1705,9 +1643,7 @@
     });
 
 
-    /* =====================================================================
-       L3. SETTINGS, FEEDBACK AND PRIVACY PAGES
-       ===================================================================== */
+    /* L3. Settings, feedback, and privacy */
 
     /* Applies the saved options to the running app (theme, alert timing, etc.).
        Called at start-up and every time a setting changes. */
@@ -1873,26 +1809,28 @@
       return h + '</div></div>';
     }
 
-    /* The Privacy policy tab. Edit the wording below if your app changes
-       (for example, if you ever add accounts, analytics or ads). */
+    /* Update this wording when the app's data practices change. */
     function privacyHTML() {
       const contact = APP_INFO.CONTACT_EMAIL
         ? 'email <a href="mailto:' + esc(APP_INFO.CONTACT_EMAIL) + '">' + esc(APP_INFO.CONTACT_EMAIL) + '</a> or use the Feedback tab'
         : 'use the Feedback tab';
       return '<div class="settings-wrap"><div class="card prose"><div class="card-head"><h2>Privacy policy</h2><span class="hint">Updated ' + esc(APP_INFO.PRIVACY_UPDATED) + '</span></div>' +
-        '<p class="lead">' + esc(APP_INFO.NAME) + ' keeps your information on your device. We don\u2019t have accounts and we never sell your data. The only information that leaves your device is what you choose to send through the feedback or donation forms.</p>' +
+        '<p class="lead">' + esc(APP_INFO.NAME) + ' stores your course data and files on this device. Umami receives website usage, performance and error metrics. Feedback and donation details are sent only when you choose to submit them.</p>' +
 
         '<h3>What the app stores</h3>' +
         '<p>Your course folders, the files you add, your deadlines, your weekly checklist ticks and your settings. All of it is saved in your browser\u2019s private storage (IndexedDB) on this device. Files you add never leave your device.</p>' +
 
         '<h3>What we don\u2019t do</h3>' +
-        '<ul><li>No sign-up or personal accounts.</li><li>No analytics or tracking of how you use the app.</li><li>No advertising.</li><li>No copy of your data on our servers.</li></ul>' +
+        '<ul><li>No sign-up or personal accounts.</li><li>No advertising.</li><li>No server-side copy of your course data or files.</li></ul>' +
+
+        '<h3>Analytics</h3>' +
+        '<p>' + esc(APP_INFO.NAME) + ' loads the Umami Cloud analytics script to measure page usage, performance and errors, and count clicks on Add deadline and Export backup. These button events send action names only, not form values or file names. Metrics are sent to Umami. See <a href="https://umami.is/privacy" target="_blank" rel="noopener noreferrer">Umami\u2019s privacy policy</a>.</p>' +
 
         '<h3>Feedback form</h3>' +
         '<p>If you send feedback, what you type (and your email, if you give one) is submitted through Tally, a third-party form service, and reaches the app owner. Tally handles it under its own privacy policy. Please don\u2019t include anything you wouldn\u2019t want to share.</p>' +
 
         '<h3>Donations</h3>' +
-        '<p>Donating is optional. If you choose to donate, the form asks for your name, email, an amount and an optional message. This is sent to the app owner only so they can thank you. The payment itself happens on the payment provider\u2019s own page, which we don\u2019t control. ' + esc(APP_INFO.NAME) + ' never sees your card or mobile money details.</p>' +
+        '<p>Donating is optional. If you choose to donate, the form asks for your name, email, an amount and an optional message. If a donor-information endpoint is configured, these details are sent to that endpoint; otherwise, they are not sent by ' + esc(APP_INFO.NAME) + '. The payment happens on the provider\u2019s own page. ' + esc(APP_INFO.NAME) + ' never sees your card or mobile money details.</p>' +
 
         '<h3>Installing and offline use</h3>' +
         '<p>If you install the app, your browser keeps a copy of the app\u2019s own files on your device so it can open quickly and work offline. This copy contains no personal information.</p>' +
@@ -1902,7 +1840,7 @@
         '<p>Because your data lives only on your device, we can\u2019t recover it if it is lost. Back it up with Export backup.</p>' +
 
         '<h3>Children</h3>' +
-        '<p>' + esc(APP_INFO.NAME) + ' is built for students. We don\u2019t knowingly collect personal information from anyone.</p>' +
+        '<p>' + esc(APP_INFO.NAME) + ' is built for students. Avoid including sensitive information in feedback or donation forms.</p>' +
 
         '<h3>Changes and contact</h3>' +
         '<p>If this policy changes, the date above is updated. Questions? ' + contact + '.</p></div></div>';
@@ -1936,7 +1874,7 @@
       toast('Backup saved to your downloads');
     }
 
-    /* Replaces the app's data with the contents of a backup (called after the student confirms). */
+    /* Restores a confirmed backup. */
     async function restoreBackup(incoming) {
       releaseAllPreviews();
       await clearAllFileBlobs();
@@ -1979,12 +1917,7 @@
     });
 
 
-    /* =====================================================================
-       L2. INSTALLABLE APP (PWA) – "Add to home screen" pop-up
-       Installing makes StudyDesk open full screen like a normal app,
-       with no browser address bar. This needs the page to be opened from
-       an https:// address (see the notes that came with this file).
-       ===================================================================== */
+    /* L2. Installable app */
     let deferredInstallPrompt = null;                    // the browser's install offer, once it arrives
     const INSTALL_REMIND_DAYS = 7;                       // how long "Not now" silences the pop-up
 
@@ -1993,9 +1926,7 @@
       return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     }
 
-    /* True once the app is installed: either we are running as the installed app, or the browser
-       told us earlier that the install finished (remembered in IndexedDB, so the Install button
-       stays hidden even if the student later opens StudyDesk in a normal browser tab). */
+    /* Checks install state, including the saved browser result. */
     function appIsInstalled() {
       return isStandalone() || kvGet(KEY_INSTALLED, false) === true;
     }
@@ -2005,7 +1936,7 @@
       return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     }
 
-    /* Draws the app icon (navy square, blue tile, white tick) and returns it as a PNG data link. */
+    /* Creates the app icon as a PNG data URL. */
     function makeAppIcon(size) {
       const c = document.createElement('canvas');
       c.width = c.height = size;
@@ -2037,7 +1968,7 @@
       kvSet(KEY_INSTALL, Date.now());
     }
 
-    /* Shows or hides the "Install app" button depending on whether the app is installed. */
+    /* Updates the Install button. */
     function updateInstallButton() {
       $('installBtn').hidden = appIsInstalled();
     }
@@ -2065,7 +1996,7 @@
       if (!$('installDialog').open) $('installDialog').showModal();
     }
 
-    /* Shows the pop-up by itself on a fresh visit (unless installed, snoozed, or another pop-up is open). */
+    /* Shows install help when appropriate. */
     function maybeAutoShowInstall() {
       if (appIsInstalled() || installRecentlyDismissed() || document.querySelector('dialog[open]')) return;
       showInstallPopup();
@@ -2119,7 +2050,7 @@
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* sw.js not found: app still works online */ });
       }
 
-      /* The browser says "this app can be installed": keep the offer and show our pop-up. */
+      /* Save the browser's install offer. */
       window.addEventListener('beforeinstallprompt', function (e) {
         e.preventDefault();
         deferredInstallPrompt = e;
@@ -2138,7 +2069,7 @@
         toast('StudyDesk installed');
       });
 
-      /* Running as the installed app? Remember it, and keep the Install button in sync if that changes. */
+      /* Tracks standalone mode and updates the Install button. */
       if (isStandalone()) kvSet(KEY_INSTALLED, true);
       const standaloneQuery = window.matchMedia('(display-mode: standalone)');
       if (standaloneQuery && standaloneQuery.addEventListener) {
@@ -2157,9 +2088,7 @@
     }
 
 
-    /* =====================================================================
-       L4. WELCOME – asks for the student's name the first time the app opens
-       ===================================================================== */
+    /* L4. First-run welcome */
 
     /* Shows the welcome pop-up if the name hasn't been given (or skipped) yet. */
     function maybeShowWelcome() {
@@ -2172,7 +2101,7 @@
       setTimeout(function () { $('welcomeName').focus(); }, 60);
     }
 
-    /* Saves the name (or an empty name if skipped), closes the pop-up and greets the student. */
+    /* Saves the name and closes the welcome dialog. */
     function finishWelcome(name) {
       state.settings.name = name;
       state.settings.askedName = true;
@@ -2195,10 +2124,7 @@
     $('welcomeDialog').addEventListener('cancel', function (e) { e.preventDefault(); });
 
 
-    /* =====================================================================
-       L5. DONATIONS – the friendly banner, the donate form, the payment link
-       (Where to put your payment link: see "DONATIONS" inside APP_INFO at the top.)
-       ===================================================================== */
+    /* L5. Donations */
 
     /* Reads the small record of donate-banner timing (kept on this device). */
     function donateState() {
@@ -2370,13 +2296,9 @@
     });
 
 
-    /* =====================================================================
-       L6. WIDGETS – small boxes at the top of the dashboard (turned on in Settings)
-       To add your own widget: write a function that returns HTML, then add
-       a line to WIDGET_CATALOG below.
-       ===================================================================== */
+    /* L6. Dashboard widgets */
 
-    /* The list of widgets shown in Settings. id = saved name, name/desc = what the student sees. */
+    /* Widget options shown in Settings. */
     const WIDGET_CATALOG = [
       { id: 'clock', name: 'Clock', desc: "Live time and today's date.", render: widgetClock },
       { id: 'countdown', name: 'Next deadline', desc: 'A live countdown to your next deadline.', render: widgetCountdown },
@@ -2389,7 +2311,7 @@
     const timer = { len: 25 * 60, remaining: 25 * 60, running: false, endAt: 0 };   // the focus timer's memory
     let noteTimer = null;
 
-    /* Draws the widgets that are switched on (or a small "Add widgets" prompt if none). */
+    /* Draws enabled widgets or the setup prompt. */
     function renderWidgets() {
       const area = $('widgetArea');
       const ids = state.settings.widgets;
@@ -2530,7 +2452,7 @@
       noteTimer = setTimeout(function () { kvSet(KEY_NOTE, v); }, 400);
     });
 
-    /* Runs every second: moves the clock/countdown/timer numbers without redrawing the page. */
+    /* Updates live widget values every second. */
     function tickWidgets() {
       if (timer.running && timerRemaining() <= 0) {
         timer.running = false;
@@ -2548,15 +2470,12 @@
     }
 
 
-    /* =====================================================================
-       L7. TIMETABLE – weekly repeating classes (page, pop-up, dashboard card)
-       HOW TO CHANGE: wording is below; the colors come from each course's folder color.
-       ===================================================================== */
+    /* L7. Weekly timetable */
 
     const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    /* Day numbers (0 = Sunday) in the order the week is shown (follows the "Week starts on" setting). */
+    /* Weekday order follows the week-start setting. */
     function weekDayOrder() {
       return APP_SETTINGS.WEEK_STARTS_ON_MONDAY ? [1, 2, 3, 4, 5, 6, 0] : [0, 1, 2, 3, 4, 5, 6];
     }
@@ -2575,7 +2494,7 @@
     /* What to call a class: its own title, or else the course name. */
     function classLabel(c) { return c.title || courseName(c.course); }
 
-    /* "NNB 2" -> "Room NNB 2" (leaves "Room 5" alone). Returns "" when there is no room. */
+    /* Formats a room label, or returns empty when unset. */
     function roomText(c) {
       if (!c.room) return '';
       return /^room\b/i.test(c.room) ? c.room : 'Room ' + c.room;
@@ -2589,7 +2508,7 @@
         (c.room ? '<small>' + esc(roomText(c)) + '</small>' : '') + '</button>';
     }
 
-    /* Draws the Timetable page: 7 day columns on wide screens, day pills + one day on phones. */
+    /* Draws the desktop and mobile timetable. */
     function renderTimetable() {
       const card = $('timetableCard');
       const today = new Date().getDay();
@@ -2619,8 +2538,7 @@
       card.innerHTML = html;
     }
 
-    /* Opens the class pop-up. Pass {id} to edit (all days of that class), or {day} to start on a weekday.
-       Every day has its own start and end time, so a class can meet at different times on different days. */
+    /* Opens the class dialog to add or edit entries. */
     function openTimetableModal(opts) {
       opts = opts || {};
       const editing = opts.id ? state.timetable.find(function (c) { return c.id === opts.id; }) : null;
@@ -2657,7 +2575,7 @@
       $('ttTitle').focus();
     }
 
-    /* Ticking a day shows its time boxes (copying the times of a day that is already ticked). */
+    /* Shows time fields when a day is selected. */
     function onTtDayChange(e) {
       const box = e.target;
       if (!box.matches || !box.matches('input[type="checkbox"]')) return;
@@ -2673,13 +2591,13 @@
       }
     }
 
-    /* All the weekday entries that belong to the same class (a class held Mon + Wed shares one gid). */
+    /* Returns all entries for a grouped class. */
     function classGroup(c) {
       if (!c.gid) return [c];
       return state.timetable.filter(function (x) { return x.gid === c.gid; });
     }
 
-    /* Validates and saves the class form: one entry per ticked day, each with its own times. */
+    /* Validates and saves one entry per selected day. */
     function saveClass(e) {
       e.preventDefault();
       const err = $('ttError');
@@ -2725,7 +2643,7 @@
       });
     }
 
-    /* A timestamp (ms) for a class's "HH:MM" on today (offset 0) or tomorrow (offset 1). */
+    /* Gets today's or tomorrow's timestamp for a class time. */
     function classTimeTs(c, hhmm, offset) {
       const d = new Date();
       d.setDate(d.getDate() + offset);
@@ -2740,14 +2658,13 @@
       return (d ? d + 'd ' : '') + (d || h ? h + 'h ' : '') + pad(m) + 'm ' + pad(s) + 's';
     }
 
-    /* The live countdown piece shown inside a class alert (updated every second by tickClassCountdowns). */
+    /* Countdown markup for a class alert. */
     function countdownHTML(a) {
       if (!a.countdownTo) return '';
       return ' \u2014 starts in <b class="cd" data-countdown="' + a.countdownTo + '">' + formatCountdown(a.countdownTo - Date.now()) + '</b>';
     }
 
-    /* Runs every second: moves every countdown on screen. When one reaches zero, the alerts redraw
-       (the class then shows as "In session"). */
+    /* Updates class countdowns and refreshes expired alerts. */
     function tickClassCountdowns() {
       let expired = false;
       document.querySelectorAll('[data-countdown]').forEach(function (el) {
@@ -2760,7 +2677,7 @@
       if (ui.view === 'dashboard' && !document.querySelector('dialog[open]')) renderTodayClasses();
     }
 
-    /* The compact "Today's classes" card on the Dashboard (hidden until a class exists). */
+    /* Draws today's classes when any are scheduled. */
     function renderTodayClasses() {
       const area = $('classesArea');
       if (!state.timetable.length) { area.innerHTML = ''; return; }
@@ -2790,11 +2707,9 @@
     }
 
 
-    /* =====================================================================
-       L8. SHARE A DEADLINE – WhatsApp / quick share
-       ===================================================================== */
+    /* L8. Share a deadline */
 
-    /* Shares a deadline as a short, friendly message (phone share sheet, or copy on desktop). */
+    /* Shares or copies a deadline summary. */
     function shareDeadline(id) {
       const d = state.deadlines.find(function (x) { return x.id === id; });
       if (!d) return;
@@ -2826,11 +2741,7 @@
     }
 
 
-    /* =====================================================================
-       L9. BACKUP REMINDER – a polite banner (same look as the donate banner)
-       Timing is saved in IndexedDB: lastBackupAt and backupSnoozeUntil.
-       HOW TO CHANGE: the number of days is BACKUP_REMIND_DAYS in APP_SETTINGS.
-       ===================================================================== */
+    /* L9. Backup reminder */
 
     /* True once the student has anything worth backing up. */
     function hasSavedData() {
@@ -2880,12 +2791,9 @@
     }
 
 
-    /* =====================================================================
-       M. START-UP
-       ===================================================================== */
+    /* M. Startup */
 
-    /* Runs once when the page opens: opens the IndexedDB database, loads the saved
-       data (a brand-new student gets a completely empty, fresh app), then draws the screen. */
+    /* Loads saved data and starts the app. */
     async function init() {
       db = await openDatabase();
       storageWorks = !!db;
@@ -2894,7 +2802,7 @@
         await migrateLegacyStorage();      // one-time move from the old localStorage (existing students)
         requestPersistentStorage();        // ask the browser not to auto-clear our data
       } else {
-        /* IndexedDB blocked: still show any old data for this visit (nothing will be saved). */
+        /* Use legacy data for this visit if IndexedDB is blocked. */
         try { const raw = localStorage.getItem(LEGACY_KEYS.state); if (raw) kvCache[KEY_STATE] = raw; } catch (e) { /* ignore */ }
       }
 
@@ -2905,7 +2813,7 @@
       if (saved) {
         state = saved;
       } else {
-        state = emptyState();   // brand-new students start with a clean slate (no demo data)
+        state = emptyState();   // Start new users with a clean slate.
         saveState();
       }
       applySettings();
@@ -2915,7 +2823,7 @@
       scheduleDonateBanner();
       scheduleBackupBanner();
       setInterval(tickClassCountdowns, 1000);   // live class countdowns
-      setInterval(tickWidgets, 1000);   // keeps the clock, countdown and focus timer moving
+      setInterval(tickWidgets, 1000);   // Keep widgets updated.
 
       /* Re-check alerts every minute so "Due in 2 days" stays correct overnight */
       setInterval(function () {

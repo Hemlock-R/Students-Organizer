@@ -4,7 +4,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <!-- Makes the installed app look native: colored status bar, full screen, no browser bar -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+      base-uri 'self';
+      object-src 'none';
+      script-src 'self' https://cloud.umami.is https://cdnjs.cloudflare.com;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: blob:;
+      media-src 'self' blob:;
+      font-src 'self' data:;
+      connect-src 'self' https://cloud.umami.is https://gateway.umami.is;
+      frame-src 'self' blob: https://tally.so;
+      worker-src 'self' blob: https://cdnjs.cloudflare.com;
+      manifest-src 'self' blob:;
+      form-action 'self'">
+  <!-- Installed-app theme color -->
   <meta name="theme-color" content="#0b1b36">
   <meta name="description" content="StudyDesk: organize course files, deadlines and weekly reminders.">
   <meta name="mobile-web-app-capable" content="yes">
@@ -14,40 +29,21 @@
   <title>StudyDesk – Student Organizer</title>
   <link rel="stylesheet" href="style.css">
 
-  <!--
-  =====================================================================
-  STUDYDESK – a single-file student organizer
-  =====================================================================
-  HOW THIS FILE IS ORGANIZED
-    1. <style>   – all the looks (colors, spacing, layout)
-    2. <body>    – the empty "shells" of the page (sidebar, views, pop-ups)
-    3. <script>  – all the behavior (folders, files, calendar, alerts)
-
-  EASY TWEAKS (no coding knowledge needed)
-    • Feedback form . paste your Tally link into APP_INFO.TALLY_FORM_URL
-                      (search this file for "PASTE YOUR TALLY LINK HERE")
-    • Contact email . APP_INFO.CONTACT_EMAIL (shown in the Privacy policy)
-    • Colors ........ edit the values at the top of the <style> block
-    • Alert timing .. edit APP_SETTINGS near the top of the <script> block
-    • Weekly to-dos . edit EXTRA_WEEKLY_TASKS in APP_SETTINGS
-    • Week start .... set WEEK_STARTS_ON_MONDAY to true in APP_SETTINGS
-
-  Your data is saved in your browser (localStorage). Nothing is sent
-  anywhere. No internet connection or external libraries are needed.
-  =====================================================================
--->
-<script defer src="https://cloud.umami.is/script.js" data-website-id="891b1916-afc2-41a1-a7f6-babc738f1909"></script>
+  <!-- StudyDesk UI; data is stored in this browser. -->
+<script defer src="https://cloud.umami.is/script.js"
+data-website-id="891b1916-afc2-41a1-a7f6-babc738f1909"
+data-performance="true"
+data-error="true"
+></script>
 
 </head>
 
 <body>
 
-  <!-- =====================================================================
-     APP SHELL: sidebar navigation + main content area
-     ===================================================================== -->
+  <!-- App shell -->
   <div class="app">
 
-    <!-- Sidebar / bottom tab bar. Buttons use data-action="nav" to switch pages -->
+    <!-- Sidebar navigation -->
     <aside class="sidebar">
       <div class="brand">
         <span class="brand-mark" id="brandMark"></span>
@@ -68,7 +64,7 @@
 
     <main class="main" id="main">
 
-      <!-- Page title, today's date, bell and "Add deadline" button -->
+      <!-- Page title and actions -->
       <header class="topbar">
         <div>
           <h1 id="pageTitle">Dashboard</h1>
@@ -82,17 +78,17 @@
         </div>
       </header>
 
-      <!-- Urgent-deadline banner (filled in by JavaScript) -->
+      <!-- Urgent-deadline banner -->
       <div id="bannerArea" aria-live="polite"></div>
 
-      <!-- ============ VIEW 1: DASHBOARD ============ -->
+      <!-- Dashboard -->
       <section class="view" id="view-dashboard">
-        <!-- Widgets the student switched on in Settings -->
+        <!-- Enabled widgets -->
         <div id="widgetArea"></div>
         <div class="dash">
           <div class="dash-col">
             <div id="heroArea"></div>
-            <!-- Today's classes (L7) – only shown once a class exists -->
+            <!-- Today's classes (L7) -->
             <div id="classesArea"></div>
             <div class="card" id="upcomingCard"></div>
           </div>
@@ -103,7 +99,7 @@
         </div>
       </section>
 
-      <!-- ============ VIEW 2: FILES & FOLDERS ============ -->
+      <!-- Files and folders -->
       <section class="view" id="view-files" hidden>
         <div class="files-layout">
           <div class="card" id="folderListCard"></div>
@@ -111,18 +107,18 @@
         </div>
       </section>
 
-      <!-- ============ VIEW 3: CALENDAR ============ -->
+      <!-- Calendar -->
       <section class="view" id="view-calendar" hidden>
         <div class="card" id="calendarCard"></div>
         <div class="card" id="monthListCard"></div>
       </section>
 
-      <!-- ============ VIEW 3b: TIMETABLE ============ -->
+      <!-- Timetable -->
       <section class="view" id="view-timetable" hidden>
         <div class="card" id="timetableCard"></div>
       </section>
 
-      <!-- ============ VIEW 4: SETTINGS, FEEDBACK, PRIVACY ============ -->
+      <!-- Settings, feedback, and privacy -->
       <section class="view" id="view-settings" hidden>
         <div id="settingsArea"></div>
       </section>
@@ -130,18 +126,16 @@
     </main>
   </div>
 
-  <!-- Hidden file picker used by the upload box (kept outside the box on purpose) -->
+  <!-- Upload file picker -->
   <input type="file" id="fileInput" class="visually-hidden" multiple tabindex="-1" aria-hidden="true">
-  <!-- Hidden picker used by Settings > Import backup -->
+  <!-- Backup import picker -->
   <input type="file" id="importInput" class="visually-hidden" accept="application/json,.json" tabindex="-1"
     aria-hidden="true">
 
-  <!-- Short confirmation message -->
+  <!-- Status message -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <!-- =====================================================================
-     POP-UP: ADD / EDIT DEADLINE
-     ===================================================================== -->
+  <!-- Add or edit deadline -->
   <dialog id="deadlineDialog" aria-labelledby="deadlineDlgTitle">
     <form class="dlg" id="deadlineForm" novalidate>
       <h2 id="deadlineDlgTitle">Add deadline</h2>
@@ -178,9 +172,7 @@
     </form>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: ADD / EDIT CLASS (timetable)
-     ===================================================================== -->
+  <!-- Add or edit class -->
   <dialog id="timetableDialog" aria-labelledby="ttDlgTitle">
     <form class="dlg" id="timetableForm" novalidate>
       <h2 id="ttDlgTitle">Add class</h2>
@@ -206,9 +198,7 @@
     </form>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: NEW FOLDER
-     ===================================================================== -->
+  <!-- New folder -->
   <dialog id="folderDialog" aria-labelledby="folderDlgTitle">
     <form class="dlg" id="folderForm" novalidate>
       <h2 id="folderDlgTitle">New main folder</h2>
@@ -229,9 +219,7 @@
     </form>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: FILE VIEWER
-     ===================================================================== -->
+  <!-- File viewer -->
   <dialog id="viewerDialog" class="wide" aria-labelledby="viewerTitle">
     <div class="dlg">
       <h2 id="viewerTitle">File</h2>
@@ -244,9 +232,7 @@
     </div>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: CONFIRM (used before deleting anything)
-     ===================================================================== -->
+  <!-- Delete confirmation -->
   <dialog id="confirmDialog" aria-labelledby="confirmTitle">
     <div class="dlg">
       <h2 id="confirmTitle">Are you sure?</h2>
@@ -259,23 +245,17 @@
   </dialog>
 
 
-  <!-- =====================================================================
-     POP-UP: VIEW DEADLINE (read-only; use Edit inside to change it)
-     ===================================================================== -->
+  <!-- Read-only deadline view -->
   <dialog id="viewDialog" aria-labelledby="vdTitle">
     <div id="viewDlBody"></div>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: INSTALL THE APP (filled in by JavaScript)
-     ===================================================================== -->
+  <!-- App installation dialog -->
   <dialog id="installDialog" aria-labelledby="installTitle">
     <div class="dlg" id="installBody"></div>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: WELCOME (asks for the student's name on first open)
-     ===================================================================== -->
+  <!-- First-run welcome -->
   <dialog id="welcomeDialog" aria-labelledby="welcomeTitle">
     <form class="dlg" id="welcomeForm" novalidate>
       <div class="install-hero"><img alt="" id="welcomeIcon" src="">
@@ -293,22 +273,17 @@
     </form>
   </dialog>
 
-  <!-- =====================================================================
-     DONATE: friendly banner (Donate / Ignore) and the donate pop-up form
-     ===================================================================== -->
+  <!-- Donation banner and dialog -->
   <div class="donate-banner" id="donateBanner" role="region" aria-label="Support StudyDesk" hidden></div>
 
-  <!-- Backup reminder (L9) – reuses the donate-banner look -->
+  <!-- Backup reminder (L9) -->
   <div class="donate-banner" id="backupBanner" role="region" aria-label="Backup reminder" hidden></div>
 
   <dialog id="donateDialog" aria-labelledby="donateTitle">
     <div id="donateBody"></div>
   </dialog>
 
-  <!-- =====================================================================
-     POP-UP: ALERTS (opened by the bell in the top bar)
-     Lists urgent deadlines, deadlines coming up, and weekly slide reminders.
-     ===================================================================== -->
+  <!-- Alerts dialog -->
   <dialog id="alertsDialog" aria-labelledby="alertsTitle">
     <div class="dlg">
       <h2 id="alertsTitle">Alerts</h2>
@@ -320,8 +295,6 @@
   </dialog>
 
 <script src="script.js"></script>
-<script data-goatcounter="https://studydesk.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
 </body>
 
 </html>
