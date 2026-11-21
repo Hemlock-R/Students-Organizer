@@ -136,6 +136,33 @@ data-error="true"
   <!-- Status message -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <!-- Course grades -->
+  <dialog id="gradesDialog" class="wide" aria-label="Course grades">
+    <div id="gradesBody"></div>
+  </dialog>
+
+  <!-- Add or edit grade part -->
+  <dialog id="gradePartDialog" aria-labelledby="gradePartDlgTitle">
+    <form class="dlg" id="gradePartForm" novalidate>
+      <h2 id="gradePartDlgTitle">Add grade part</h2>
+      <input type="hidden" id="gpCourse">
+      <input type="hidden" id="gpPart">
+      <label class="field"><span>Name</span><input type="text" id="gpName" maxlength="80" placeholder="e.g. Midterm" required></label>
+      <div class="field-row">
+        <label class="field"><span>Weight (%)</span><input type="number" id="gpWeight" min="0" step="0.1" required></label>
+        <label class="field"><span>Score earned (optional)</span><input type="number" id="gpScore" min="0" step="0.1"></label>
+      </div>
+      <label class="field"><span>Maximum score (optional)</span><input type="number" id="gpMax" min="0.1" step="0.1"></label>
+      <p class="error-text" id="gpError" role="alert"></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-danger" id="gpDeleteBtn" data-action="delete-grade-part" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">Cancel</button>
+        <button type="submit" class="btn">Save part</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Add or edit deadline -->
   <dialog id="deadlineDialog" aria-labelledby="deadlineDlgTitle">
     <form class="dlg" id="deadlineForm" novalidate>

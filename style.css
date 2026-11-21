@@ -438,6 +438,31 @@ dialog::backdrop { background: rgba(8, 20, 45, .6); }
 
 /* 12c. Settings */
 .settings-wrap { max-width: 780px; margin: 0 auto; }
+.grades-dlg { max-height: calc(100vh - 24px); overflow: auto; }
+.grades-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.grades-head h2 { margin: 0 0 4px; }
+.grade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grade-grid .card { margin: 0; }
+.grade-standing { margin: 8px 0; }
+.grade-standing strong { font-size: 32px; }
+.grade-mark-count { margin-top: 8px; }
+.grade-total { margin-top: 12px; }
+.grade-warning { color: var(--warn); }
+.grade-parts-card, .grade-target-card { margin-top: 12px; }
+.grade-parts { display: grid; gap: 8px; }
+.grade-part { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); text-align: left; }
+.grade-part:hover { background: var(--surface-2); border-color: var(--primary); }
+.grade-part span { min-width: 0; }
+.grade-part strong, .grade-part small { display: block; }
+.grade-part small { color: var(--text-muted); margin-top: 2px; }
+.grade-part-score { flex: none; text-align: right; font-weight: 650; }
+.grade-result { min-height: 20px; margin-top: 10px; font-weight: 650; color: var(--text); }
+.grade-scale-table { margin-top: 8px; }
+.grade-scale-head, .grade-scale-row { display: grid; grid-template-columns: 1fr 1fr 1fr 36px; gap: 8px; align-items: center; }
+.grade-scale-head { color: var(--text-muted); font-size: 13px; font-weight: 650; margin-bottom: 6px; }
+.grade-scale-row { margin-top: 6px; }
+.grade-scale-row input { min-width: 0; width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.gpa-value { font-size: 30px; font-weight: 750; padding: 6px 0 2px; }
 .tabs { max-width: 780px; margin: 0 auto 18px; display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--border); }
 .settings-copyright { margin: 20px 0 4px; text-align: center; font-size: 12px; color: var(--text-muted); }
 .tab { padding: 10px 14px; background: transparent; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; font-weight: 650; color: var(--text-muted); white-space: nowrap; }
@@ -557,6 +582,9 @@ dialog::backdrop { background: rgba(8, 20, 45, .6); }
 
 @media (max-width: 640px) {
   /* Stack deadline rows */
+  .grade-grid { grid-template-columns: 1fr; }
+  .grade-scale-head { grid-template-columns: 1fr 1fr 1fr 36px; }
+  .grade-part { align-items: flex-start; }
   .dl-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .dl-due { grid-column: 2 / 3; text-align: left; white-space: normal; }
   .dl-due small { display: inline; margin-left: 6px; }

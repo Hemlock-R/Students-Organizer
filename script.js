@@ -37,7 +37,7 @@
     /* A2. App info */
     const APP_INFO = {
       NAME: 'StudyDesk',
-      VERSION: '1.3.0',
+      VERSION: '1.4.0',
 
       /* Set a Tally form URL to enable Settings > Feedback. */
       TALLY_FORM_URL: 'https://tally.so/r/NqXDdl',   // <-- PASTE YOUR TALLY LINK HERE
@@ -74,6 +74,13 @@
       weekStartsMonday: APP_SETTINGS.WEEK_STARTS_ON_MONDAY,
       defaultTime: APP_SETTINGS.DEFAULT_DUE_TIME,
       extraTasks: APP_SETTINGS.EXTRA_WEEKLY_TASKS.slice(),
+      gradingScale: [
+        { letter: 'A', minimum: 80, points: 4 },
+        { letter: 'B', minimum: 70, points: 3 },
+        { letter: 'C', minimum: 60, points: 2 },
+        { letter: 'D', minimum: 50, points: 1 },
+        { letter: 'F', minimum: 0, points: 0 }
+      ],
       widgets: []                                        // ids of the dashboard widgets switched on in Settings
     };
 
@@ -255,6 +262,54 @@
 
     /* The color to display for a deadline's course. */
     function courseColor(id) { const f = rootOf(id); return f ? f.color : '#64748b'; }
+
+    /* Grade helpers */
+    function scoredPart(part) {
+      return !!part && part.score !== null && part.score !== undefined &&
+        part.max !== null && part.max !== undefined && Number(part.max) > 0;
+    }
+
+    function courseStanding(course) {
+      if (!course || !Array.isArray(course.gradeParts)) return { percentage: null, earnedWeight: 0, scored: 0, total: 0 };
+      let earnedMarks = 0;
+      let scoredWeight = 0;
+      let scored = 0;
+      course.gradeParts.forEach(function (part) {
+        if (scoredPart(part)) {
+          earnedMarks += (Number(part.score) / Number(part.max)) * Number(part.weight);
+          scoredWeight += Number(part.weight);
+          scored++;
+        }
+      });
+      const percentage = scoredWeight > 0 ? (earnedMarks / scoredWeight) * 100 : null;
+      return { percentage: percentage, earnedMarks: earnedMarks, scoredWeight: scoredWeight, scored: scored, total: course.gradeParts.length };
+    }
+
+    function gradeForPercentage(percentage) {
+      if (!Number.isFinite(percentage) || !state.settings.gradingScale.length) return { letter: '', points: null };
+      const scale = state.settings.gradingScale.slice().sort(function (a, b) { return b.minimum - a.minimum; });
+      for (let i = 0; i < scale.length; i++) {
+        if (percentage >= scale[i].minimum) return { letter: scale[i].letter, points: scale[i].points };
+      }
+      return { letter: '', points: null };
+    }
+
+    function semesterGPA() {
+      let pointsCredits = 0;
+      let credits = 0;
+      rootFolders().forEach(function (course) {
+        const standing = courseStanding(course);
+        const courseCredits = Number(course.credits);
+        if (standing.percentage !== null && Number.isFinite(courseCredits) && courseCredits > 0) {
+          const grade = gradeForPercentage(standing.percentage);
+          if (Number.isFinite(grade.points)) {
+            pointsCredits += grade.points * courseCredits;
+            credits += courseCredits;
+          }
+        }
+      });
+      return credits > 0 ? pointsCredits / credits : null;
+    }
 
     /* Draws a small inline icon (no external icon library needed). */
     function icon(name) {
@@ -549,7 +604,31 @@
       const st = emptyState();
       if (!data || typeof data !== 'object') return st;
       const folders = (Array.isArray(data.folders) ? data.folders : []).filter(function (f) { return f && typeof f.id === 'string' && typeof f.name === 'string'; })
-        .map(function (f) { return { id: f.id, name: f.name, parentId: typeof f.parentId === 'string' ? f.parentId : '', color: APP_SETTINGS.FOLDER_COLORS.indexOf(f.color) > -1 ? f.color : APP_SETTINGS.FOLDER_COLORS[0] }; });
+        .map(function (f) {
+          const credits = Number(f.credits);
+          const parts = (Array.isArray(f.gradeParts) ? f.gradeParts : []).filter(function (p) {
+            return p && typeof p.id === 'string' && typeof p.name === 'string';
+          }).map(function (p) {
+            const weight = Number(p.weight);
+            const score = p.score === '' || p.score === null || p.score === undefined ? null : Number(p.score);
+            const max = p.max === '' || p.max === null || p.max === undefined ? null : Number(p.max);
+            return {
+              id: p.id,
+              name: p.name.trim().slice(0, 80),
+              weight: Number.isFinite(weight) ? Math.max(0, weight) : 0,
+              score: Number.isFinite(score) ? Math.max(0, score) : null,
+              max: Number.isFinite(max) ? Math.max(0, max) : null
+            };
+          });
+          return {
+            id: f.id,
+            name: f.name,
+            parentId: typeof f.parentId === 'string' ? f.parentId : '',
+            color: APP_SETTINGS.FOLDER_COLORS.indexOf(f.color) > -1 ? f.color : APP_SETTINGS.FOLDER_COLORS[0],
+            credits: Number.isFinite(credits) && credits >= 0 ? credits : '',
+            gradeParts: parts
+          };
+        });
       /* Remove invalid, missing, or cyclic parent references. */
       const ids = {};
       folders.forEach(function (f) { ids[f.id] = f; });
@@ -576,6 +655,18 @@
         return WIDGET_CATALOG.some(function (w) { return w.id === id; }) && arr.indexOf(id) === i;
       });
       if (!Array.isArray(set.extraTasks)) set.extraTasks = DEFAULT_SETTINGS.extraTasks.slice();
+      set.gradingScale = (Array.isArray(set.gradingScale) ? set.gradingScale : DEFAULT_SETTINGS.gradingScale).filter(function (row) {
+        return row && typeof row.letter === 'string';
+      }).map(function (row) {
+        const minimum = Number(row.minimum);
+        const points = Number(row.points);
+        return {
+          letter: row.letter.trim().slice(0, 10),
+          minimum: Number.isFinite(minimum) ? Math.max(0, Math.min(100, minimum)) : 0,
+          points: Number.isFinite(points) ? Math.max(0, points) : 0
+        };
+      }).filter(function (row) { return row.letter; });
+      if (!set.gradingScale.length) set.gradingScale = DEFAULT_SETTINGS.gradingScale.map(function (row) { return Object.assign({}, row); });
       st.settings = set;
       return st;
     }
@@ -796,6 +887,7 @@
       renderUpcoming();
       renderChecklist();
       renderFolderSummary();
+      renderSemesterGPA();
     }
 
     /* The big blue "next deadline" card at the top of the dashboard. */
@@ -908,6 +1000,22 @@
       $('folderSummaryCard').innerHTML = html;
     }
 
+    /* Semester GPA is shown only when at least one course has a standing and credits. */
+    function renderSemesterGPA() {
+      const area = $('checklistCard').parentElement;
+      const existing = area.querySelector('.semester-gpa-card');
+      if (existing) existing.remove();
+      const gpa = semesterGPA();
+      if (gpa === null) return;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = '<div class="card-head"><h2>Semester GPA</h2></div>' +
+        '<div class="gpa-value">' + gpa.toFixed(2) + '</div>' +
+        '<p class="hint">Based on courses with scored marks and credits.</p>';
+      card.className = 'card semester-gpa-card';
+      area.appendChild(card);
+    }
+
 
     /* H. Files and folders */
 
@@ -965,6 +1073,7 @@
           (depth === 0 ? '<span class="fold-tile">' + icon('folder') + '</span>' : '<span class="fold-mini">' + icon('folder') + '</span>') +
           '<span class="name">' + esc(f.name) + '</span><span class="num">' + fileCountDeep(f.id) + '</span>' +
           (hasKids ? '<span class="chev ' + (open ? 'open' : '') + '">' + icon('chev') + '</span>' : '') + '</button>' +
+          (depth === 0 ? '<button class="icon-btn" data-action="open-grades" data-id="' + esc(f.id) + '" aria-label="Grades for ' + esc(f.name) + '">' + 'G' + '</button>' : '') +
           (depth < APP_SETTINGS.MAX_FOLDER_DEPTH - 1 ? '<button class="icon-btn" data-action="new-folder" data-parent="' + esc(f.id) + '" aria-label="New subfolder in ' + esc(f.name) + '">' + icon('plus') + '</button>' : '') +
           '<button class="icon-btn danger" data-action="delete-folder" data-id="' + esc(f.id) + '" aria-label="Delete folder ' + esc(f.name) + '">' + icon('trash') + '</button></div>' +
           (open ? folderTreeHTML(f.id) : '');
@@ -1016,6 +1125,7 @@
         '<div><h2>' + esc(f.name) + '</h2><span class="kind">' + (f.parentId ? 'Subfolder in ' + esc(folderById(f.parentId) ? folderById(f.parentId).name : '') : 'Main folder') + '</span></div></div>' +
         '<div class="head-actions"><span class="hint">' + files.length + (files.length === 1 ? ' file here' : ' files here') + '</span>' +
         (canAddSub ? '<button class="btn btn-ghost btn-small" data-action="new-folder" data-parent="' + esc(f.id) + '">' + icon('plus') + '<span>New subfolder</span></button>' : '') +
+        '<button class="btn btn-ghost btn-small" data-action="open-grades" data-id="' + esc(rootOf(f.id).id) + '">Grades</button>' +
         '</div></div>';
 
       if (subs.length) {
@@ -1242,7 +1352,7 @@
       }
       const checked = document.querySelector('input[name="fcolor"]:checked');
       const color = parentId ? rootOf(parentId).color : (checked ? checked.value : APP_SETTINGS.FOLDER_COLORS[0]);
-      const folder = { id: uid(), name: name, color: color, parentId: parentId };
+      const folder = { id: uid(), name: name, color: color, parentId: parentId, credits: '', gradeParts: [] };
       state.folders.push(folder);
       ui.folderId = folder.id;
       expandPathTo(folder.id);   // open the parent so the new subfolder is visible
@@ -1582,6 +1692,33 @@
         case 'new-folder': openFolderModal(el.dataset.parent || ''); break;
         case 'select-folder': expandPathTo(id); ui.folderId = id; renderFiles(); break;
         case 'delete-folder': deleteFolder(id); break;
+        case 'open-grades': openGrades(id); break;
+        case 'add-grade-part': openGradePartModal(id); break;
+        case 'edit-grade-part': openGradePartModal(el.dataset.course, id); break;
+        case 'grade-template':
+          (function () {
+            const course = folderById(id);
+            if (!course || course.gradeParts.length) return;
+            course.gradeParts = [
+              { id: uid(), name: 'Continuous assessment', weight: 30, score: null, max: null },
+              { id: uid(), name: 'Exam', weight: 70, score: null, max: null }
+            ];
+            saveState();
+            renderGrades(course.id);
+            renderAll();
+          })();
+          break;
+        case 'delete-grade-part': deleteGradePart(); break;
+        case 'add-grade-scale':
+          state.settings.gradingScale.push({ letter: '', minimum: 0, points: 0 });
+          saveState();
+          renderSettings();
+          break;
+        case 'remove-grade-scale':
+          state.settings.gradingScale.splice(Number(el.dataset.index), 1);
+          saveState();
+          renderSettings();
+          break;
         case 'pick-files': $('fileInput').click(); break;
         case 'view-file': openFileViewer(id); break;
         case 'remove-file': removeFile(id); break;
@@ -1639,6 +1776,7 @@
     $('ttDays').addEventListener('change', onTtDayChange);
     $('folderForm').addEventListener('submit', saveFolder);
     $('folderParent').addEventListener('change', syncFolderModal);
+    $('gradePartForm').addEventListener('submit', saveGradePart);
     $('confirmOk').addEventListener('click', function () {
       $('confirmDialog').close();
       if (confirmCallback) { const cb = confirmCallback; confirmCallback = null; cb(); }
@@ -1687,12 +1825,55 @@
       toast('Settings saved');
     }
 
+    function saveGradingScale() {
+      const scale = [];
+      const rows = document.querySelectorAll('.grade-scale-row');
+      rows.forEach(function (row) {
+        const letter = row.querySelector('[data-grade-letter]');
+        const minimum = row.querySelector('[data-grade-minimum]');
+        const points = row.querySelector('[data-grade-points]');
+        if (!letter) return;
+        const minValue = Number(minimum.value);
+        const pointValue = Number(points.value);
+        scale.push({
+          letter: letter.value.trim().slice(0, 10),
+          minimum: Number.isFinite(minValue) ? Math.max(0, Math.min(100, minValue)) : 0,
+          points: Number.isFinite(pointValue) ? Math.max(0, pointValue) : 0
+        });
+      });
+      state.settings.gradingScale = scale.filter(function (row) { return row.letter; });
+      saveState();
+      renderAll();
+    }
+
     /* Listens for changes on any control marked with data-setting="...". */
     document.addEventListener('change', function (e) {
       const el = e.target.closest ? e.target.closest('[data-setting]') : null;
       if (el) saveSetting(el.dataset.setting, el.value);
       const sw = e.target.closest ? e.target.closest('[data-widget]') : null;
       if (sw) toggleWidget(sw.dataset.widget, sw.checked);
+      const credit = e.target.closest ? e.target.closest('[data-grade-credit]') : null;
+      if (credit) {
+        const course = folderById(credit.dataset.gradeCredit);
+        if (course) {
+          const value = credit.value === '' ? '' : Number(credit.value);
+          course.credits = Number.isFinite(value) && value >= 0 ? value : '';
+          saveState();
+          renderAll();
+          renderGrades(course.id);
+        }
+      }
+      const scaleLetter = e.target.closest ? e.target.closest('[data-grade-letter], [data-grade-minimum], [data-grade-points]') : null;
+      if (scaleLetter) saveGradingScale();
+      const needPick = e.target.closest ? e.target.closest('[data-grade-need-part]') : null;
+      if (needPick) updateGradeNeed(needPick.dataset.gradeNeedPart);
+    });
+
+    document.addEventListener('input', function (e) {
+      const target = e.target.closest ? e.target.closest('[data-grade-target]') : null;
+      if (target) updateGradeNeed(target.dataset.gradeTarget);
+      const pick = e.target.closest ? e.target.closest('[data-grade-need-part]') : null;
+      if (pick) updateGradeNeed(pick.dataset.gradeNeedPart);
     });
 
     /* Draws the Settings page: the tab bar plus whichever tab is open. */
@@ -1710,6 +1891,153 @@
     /* One row in the settings list: label + hint on the left, control on the right. */
     function setRow(label, hint, control, stack) {
       return '<div class="set-row' + (stack ? ' stack' : '') + '"><div class="set-text"><strong>' + label + '</strong>' + (hint ? '<span>' + hint + '</span>' : '') + '</div><div class="set-ctl">' + control + '</div></div>';
+    }
+
+    /* Course grades */
+    function openGrades(courseId) {
+      const course = folderById(courseId);
+      if (!course) return;
+      renderGrades(courseId);
+      if (!$('gradesDialog').open) $('gradesDialog').showModal();
+    }
+
+    function renderGrades(courseId) {
+      const course = folderById(courseId);
+      if (!course) return;
+      const standing = courseStanding(course);
+      const totalWeight = course.gradeParts.reduce(function (sum, part) { return sum + Number(part.weight || 0); }, 0);
+      const pct = standing.percentage === null ? null : Math.max(0, Math.min(100, standing.percentage));
+      const grade = pct === null ? null : gradeForPercentage(pct);
+      const unscored = course.gradeParts.filter(function (part) { return !scoredPart(part); });
+
+      let html = '<div class="dlg grades-dlg" style="--c:' + course.color + '">' +
+        '<div class="grades-head"><div><h2>' + esc(course.name) + ' Grades</h2><p class="hint">Check these weights against your course outline.</p></div>' +
+        '<button type="button" class="btn btn-ghost btn-small" data-action="close-dialog">Close</button></div>' +
+        '<div class="grade-grid">' +
+        '<div class="card"><div class="card-head"><h2>Current standing</h2>' + (grade ? '<span class="badge type-project">' + esc(grade.letter) + (grade.points !== null ? ' · ' + grade.points.toFixed(1) + ' pts' : '') + '</span>' : '') + '</div>' +
+        '<div class="grade-standing">' + (pct === null ? '<strong>No marks entered</strong>' : '<strong>' + pct.toFixed(1) + '%</strong>') + '</div>' +
+        '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + (pct === null ? 0 : Math.round(pct)) + '"><div style="width:' + (pct === null ? 0 : Math.round(pct)) + '%"></div></div>' +
+        '<p class="hint grade-mark-count">' + standing.scored + ' of ' + standing.total + ' marks earned</p></div>' +
+        '<div class="card"><div class="card-head"><h2>Course details</h2></div>' +
+        '<label class="field"><span>Credits</span><input type="number" min="0" step="0.5" data-grade-credit="' + esc(course.id) + '" value="' + (course.credits === '' ? '' : esc(course.credits)) + '" placeholder="e.g. 3"></label>' +
+        '<p class="grade-total">Total weight: <strong>' + Number(totalWeight).toFixed(1) + '%</strong></p>' +
+        (Math.abs(totalWeight - 100) > 0.01 ? '<p class="hint grade-warning">The total weight is not 100%.</p>' : '') + '</div>' +
+        '</div>';
+
+      html += '<div class="card grade-parts-card"><div class="card-head"><h2>Grade parts</h2><button type="button" class="btn btn-small" data-action="add-grade-part" data-id="' + esc(course.id) + '">Add a part</button></div>';
+      if (!course.gradeParts.length) {
+        html += '<div class="empty"><strong>No grade parts yet</strong>Add your assessment parts, or start with the usual split.<br>' +
+          '<button type="button" class="btn btn-ghost btn-small" data-action="grade-template" data-id="' + esc(course.id) + '" style="margin-top:10px">Start from template</button></div>';
+      } else {
+        html += '<div class="grade-parts">' + course.gradeParts.map(function (part) {
+          const hasScore = scoredPart(part);
+          return '<button type="button" class="grade-part" data-action="edit-grade-part" data-course="' + esc(course.id) + '" data-id="' + esc(part.id) + '">' +
+            '<span><strong>' + esc(part.name) + '</strong><small>' + Number(part.weight).toFixed(1) + '% weight</small></span>' +
+            '<span class="grade-part-score">' + (hasScore ? esc(Number(part.score).toFixed(1)) + ' / ' + esc(Number(part.max).toFixed(1)) : '<span class="btn btn-ghost btn-small">Add score</span>') + '</span></button>';
+        }).join('') + '</div>';
+      }
+      html += '</div>';
+
+      html += '<div class="card grade-target-card"><div class="card-head"><h2>What do I need?</h2></div>' +
+        '<label class="field"><span>Target percentage</span><input type="number" min="0" max="100" step="0.1" data-grade-target="' + esc(course.id) + '" placeholder="e.g. 70"></label>';
+      if (unscored.length > 1) {
+        html += '<label class="field"><span>Calculate for</span><select data-grade-need-part="' + esc(course.id) + '">' +
+          '<option value="">Choose an unscored part</option>' + unscored.map(function (part) {
+            return '<option value="' + esc(part.id) + '">' + esc(part.name) + '</option>';
+          }).join('') + '</select></label>';
+      }
+      html += '<p class="grade-result" id="gradeNeedResult" data-course="' + esc(course.id) + '"></p></div>' +
+        '</div>';
+      $('gradesBody').innerHTML = html;
+    }
+
+    function openGradePartModal(courseId, partId) {
+      const course = folderById(courseId);
+      if (!course) return;
+      const part = partId ? course.gradeParts.find(function (p) { return p.id === partId; }) : null;
+      $('gradePartDlgTitle').textContent = part ? 'Edit grade part' : 'Add grade part';
+      $('gpCourse').value = courseId;
+      $('gpPart').value = part ? part.id : '';
+      $('gpName').value = part ? part.name : '';
+      $('gpWeight').value = part ? part.weight : '';
+      $('gpScore').value = part && scoredPart(part) ? part.score : '';
+      $('gpMax').value = part && scoredPart(part) ? part.max : '';
+      $('gpDeleteBtn').hidden = !part;
+      $('gpError').textContent = '';
+      if (!$('gradePartDialog').open) $('gradePartDialog').showModal();
+    }
+
+    function saveGradePart(e) {
+      e.preventDefault();
+      const course = folderById($('gpCourse').value);
+      if (!course) return;
+      const name = $('gpName').value.trim();
+      const weight = Number($('gpWeight').value);
+      const scoreRaw = $('gpScore').value.trim();
+      const maxRaw = $('gpMax').value.trim();
+      if (!name) { $('gpError').textContent = 'Enter a name.'; return; }
+      if (!Number.isFinite(weight) || weight < 0) { $('gpError').textContent = 'Enter a valid weight.'; return; }
+      if ((scoreRaw && !maxRaw) || (!scoreRaw && maxRaw)) { $('gpError').textContent = 'Enter both score and max, or leave both empty.'; return; }
+      const score = scoreRaw ? Number(scoreRaw) : null;
+      const max = maxRaw ? Number(maxRaw) : null;
+      if ((score !== null && (!Number.isFinite(score) || score < 0)) || (max !== null && (!Number.isFinite(max) || max <= 0))) {
+        $('gpError').textContent = 'Enter a valid score and max.';
+        return;
+      }
+      const partId = $('gpPart').value;
+      if (partId) {
+        const part = course.gradeParts.find(function (p) { return p.id === partId; });
+        if (part) Object.assign(part, { name: name.slice(0, 80), weight: weight, score: score, max: max });
+      } else {
+        course.gradeParts.push({ id: uid(), name: name.slice(0, 80), weight: weight, score: score, max: max });
+      }
+      saveState();
+      $('gradePartDialog').close();
+      renderGrades(course.id);
+      renderAll();
+      toast('Grade part saved');
+    }
+
+    function deleteGradePart() {
+      const course = folderById($('gpCourse').value);
+      const partId = $('gpPart').value;
+      if (!course || !partId) return;
+      const part = course.gradeParts.find(function (p) { return p.id === partId; });
+      if (!part) return;
+      askConfirm('Delete ' + part.name + '?', 'This grade part will be removed from ' + course.name + '.', 'Delete part', function () {
+        course.gradeParts = course.gradeParts.filter(function (p) { return p.id !== partId; });
+        $('gradePartDialog').close();
+        saveState();
+        renderGrades(course.id);
+        renderAll();
+        toast('Grade part deleted');
+      });
+    }
+
+    function updateGradeNeed(courseId) {
+      const course = folderById(courseId);
+      const targetInput = document.querySelector('[data-grade-target="' + CSS.escape(courseId) + '"]');
+      const result = $('gradeNeedResult');
+      if (!course || !targetInput || !result) return;
+      const target = Number(targetInput.value);
+      if (!targetInput.value || !Number.isFinite(target)) { result.textContent = ''; return; }
+      const standing = courseStanding(course);
+      const earnedMarks = standing.earnedMarks || 0;
+      let part = null;
+      const unscored = course.gradeParts.filter(function (p) { return !scoredPart(p); });
+      if (unscored.length === 1) part = unscored[0];
+      else {
+        const pick = document.querySelector('[data-grade-need-part="' + CSS.escape(courseId) + '"]');
+        if (!pick || !pick.value) { result.textContent = 'Choose which unscored part to calculate for.'; return; }
+        part = unscored.find(function (p) { return p.id === pick.value; }) || null;
+      }
+      if (!part) { result.textContent = 'There are no unscored parts left.'; return; }
+      const weight = Number(part.weight);
+      if (weight <= 0) { result.textContent = 'This part has no weight.'; return; }
+      const needed = ((target - earnedMarks) / weight) * 100;
+      if (needed <= 0) result.textContent = 'Your target is already secured.';
+      else if (needed > 100) result.textContent = 'Your target is not reachable with this part.';
+      else result.textContent = 'You need ' + needed.toFixed(1) + '% on ' + part.name + ' (' + weight.toFixed(1) + '% weight).';
     }
 
     /* Turns [[value, label], ...] into <option> tags with the current one selected. */
@@ -1744,6 +2072,16 @@
         setRow('Theme', 'Choose light, dark, or follow your device.',
           '<select data-setting="theme" aria-label="Theme">' + optionsHTML([['system', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']], st.theme) + '</select>') +
         '</div>';
+
+      h += '<div class="card" id="gradingScaleCard"><div class="card-head"><h2>Grading scale</h2><button type="button" class="btn btn-ghost btn-small" data-action="add-grade-scale">Add row</button></div>' +
+        '<div class="grade-scale-table"><div class="grade-scale-head"><span>Letter</span><span>Minimum %</span><span>Grade points</span><span></span></div>' +
+        state.settings.gradingScale.map(function (row, index) {
+          return '<div class="grade-scale-row">' +
+            '<input type="text" maxlength="10" aria-label="Grade letter" data-grade-letter="' + index + '" value="' + esc(row.letter) + '">' +
+            '<input type="number" min="0" max="100" step="0.1" aria-label="Minimum percentage" data-grade-minimum="' + index + '" value="' + esc(row.minimum) + '">' +
+            '<input type="number" min="0" step="0.1" aria-label="Grade points" data-grade-points="' + index + '" value="' + esc(row.points) + '">' +
+            '<button type="button" class="icon-btn danger" data-action="remove-grade-scale" data-index="' + index + '" aria-label="Remove grading scale row">&times;</button></div>';
+        }).join('') + '</div></div>';
 
       h += '<div class="card"><div class="card-head"><h2>Deadlines and calendar</h2></div>' +
         setRow('Red alert when due within', 'These deadlines show in red on the banner and alerts.',
