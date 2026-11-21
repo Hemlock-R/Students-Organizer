@@ -1,3 +1,5 @@
+/* StudyDesk copyright 2026 RANSFORD VINDINOBA. all rights reserved */
+
 /* A. App settings */
     const APP_SETTINGS = {
       // Urgent deadline threshold, in days.
@@ -1701,6 +1703,7 @@
         return '<button class="tab" role="tab" aria-selected="' + (t[0] === tab) + '" data-action="settings-tab" data-tab="' + t[0] + '">' + t[1] + '</button>';
       }).join('') + '</div>';
       html += tab === 'feedback' ? feedbackHTML() : (tab === 'privacy' ? privacyHTML() : settingsHTML());
+      html += '<p class="settings-copyright">&copy; 2026 StudyDesk. all rights reserved</p>';
       $('settingsArea').innerHTML = html;
     }
 
@@ -1838,9 +1841,6 @@
         '<h3>Your choices</h3>' +
         '<ul><li>Export a backup or restore one at any time in Settings.</li><li>Use Clear all data in Settings to delete everything the app holds.</li><li>Clearing your browser data or uninstalling the app also removes it.</li></ul>' +
         '<p>Because your data lives only on your device, we can\u2019t recover it if it is lost. Back it up with Export backup.</p>' +
-
-        '<h3>Children</h3>' +
-        '<p>' + esc(APP_INFO.NAME) + ' is built for students. Avoid including sensitive information in feedback or donation forms.</p>' +
 
         '<h3>Changes and contact</h3>' +
         '<p>If this policy changes, the date above is updated. Questions? ' + contact + '.</p></div></div>';

@@ -1,3 +1,5 @@
+<!-- StudyDesk copyright 2026 RANSFORD VINDINOBA. all rights reserved -->
+
 # StudyDesk
 
 StudyDesk is a lightweight student organizer built with plain HTML, CSS, and JavaScript. It helps students organize course files, deadlines, weekly tasks, and class schedules.

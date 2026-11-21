@@ -1,4 +1,6 @@
 
+/* StudyDesk copyright 2026 RANSFORD VINDINOBA. all rights reserved */
+
 /* 1. Colors and sizing */
 :root {
   color-scheme: light dark;
@@ -435,8 +437,9 @@ dialog::backdrop { background: rgba(8, 20, 45, .6); }
 .card-head .head-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 /* 12c. Settings */
-.settings-wrap { max-width: 780px; }
-.tabs { display: flex; gap: 6px; margin-bottom: 18px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+.settings-wrap { max-width: 780px; margin: 0 auto; }
+.tabs { max-width: 780px; margin: 0 auto 18px; display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+.settings-copyright { margin: 20px 0 4px; text-align: center; font-size: 12px; color: var(--text-muted); }
 .tab { padding: 10px 14px; background: transparent; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; font-weight: 650; color: var(--text-muted); white-space: nowrap; }
 .tab:hover { color: var(--text); }
 .tab[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
