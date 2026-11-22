@@ -1,7 +1,7 @@
 /* StudyDesk copyright 2026 RANSFORD VINDINOBA. all rights reserved */
 
 /* Optional offline cache. Bump CACHE_NAME to update it. */
-const CACHE_NAME = 'studydesk-v22';
+const CACHE_NAME = 'studydesk-v23';
 const APP_SHELL = ['./', './style.css', './script.js'];
 const APP_SHELL_URLS = APP_SHELL.map(function (path) { return new URL(path, self.location.href).href; });
 

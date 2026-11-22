@@ -141,6 +141,20 @@ data-error="true"
     <div id="gradesBody"></div>
   </dialog>
 
+  <!-- New grades feature announcement -->
+  <dialog id="gradesAnnouncementDialog" aria-labelledby="gradesAnnouncementTitle">
+    <div class="dlg">
+      <span class="badge type-project">New feature</span>
+      <h2 id="gradesAnnouncementTitle" style="margin-top:12px">Track your grades</h2>
+      <p style="color:var(--text-muted)">Add assessment weights and scores to see your current standing and work out what you need to reach a target.</p>
+      <p style="color:var(--text-muted)">Open a course in Files and choose <strong>Grades</strong> to get started.</p>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">Maybe later</button>
+        <button type="button" class="btn" data-action="go-to-courses">View courses</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- Add or edit grade part -->
   <dialog id="gradePartDialog" aria-labelledby="gradePartDlgTitle">
     <form class="dlg" id="gradePartForm" novalidate>

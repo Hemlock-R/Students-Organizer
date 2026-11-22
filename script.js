@@ -362,6 +362,7 @@
     const KEY_LAST_BACKUP = 'lastBackupAt';          // when the last backup was exported (ms)
     const KEY_BACKUP_SNOOZE = 'backupSnoozeUntil';  // backup reminder stays quiet until then (ms)
     const KEY_NOTE = 'note';                    // the Quick note widget text
+    const KEY_GRADES_ANNOUNCEMENT = 'gradesAnnouncementV1'; // whether the Grades announcement was dismissed
     const KEY_INSTALL = 'installDismissed';     // when "Install app" was last dismissed
     const KEY_INSTALLED = 'appInstalled';       // true once the browser reported the app was installed (hides the Install button)
 
@@ -1649,6 +1650,10 @@
       switch (action) {
         case 'nav': showView(el.dataset.view); break;
         case 'go-alerts': openAlertsDialog(); break;
+        case 'go-to-courses':
+          $('gradesAnnouncementDialog').close();
+          showView('files');
+          break;
         case 'add-deadline': openDeadlineModal({ date: todayStr() }); break;
         case 'add-on-day': openDeadlineModal({ date: el.dataset.date }); break;
         case 'view-deadline': openViewDialog(id); break;
@@ -2336,7 +2341,14 @@
 
     /* Shows install help when appropriate. */
     function maybeAutoShowInstall() {
-      if (appIsInstalled() || installRecentlyDismissed() || document.querySelector('dialog[open]')) return;
+      if (appIsInstalled() || installRecentlyDismissed()) return;
+      if ($('gradesAnnouncementDialog').open) {
+        $('gradesAnnouncementDialog').addEventListener('close', function () {
+          setTimeout(maybeAutoShowInstall, 900);
+        }, { once: true });
+        return;
+      }
+      if (document.querySelector('dialog[open]')) return;
       showInstallPopup();
     }
 
@@ -2438,6 +2450,23 @@
       $('welcomeDialog').showModal();
       setTimeout(function () { $('welcomeName').focus(); }, 60);
     }
+
+    /* Announces Grades once, after any currently open dialog has closed. */
+    function maybeShowGradesAnnouncement() {
+      if (kvGet(KEY_GRADES_ANNOUNCEMENT, false)) return;
+      const openDialogs = document.querySelectorAll('dialog[open]');
+      if (openDialogs.length) {
+        Array.prototype.forEach.call(openDialogs, function (dialog) {
+          dialog.addEventListener('close', maybeShowGradesAnnouncement, { once: true });
+        });
+        return;
+      }
+      $('gradesAnnouncementDialog').showModal();
+    }
+
+    $('gradesAnnouncementDialog').addEventListener('close', function () {
+      kvSet(KEY_GRADES_ANNOUNCEMENT, true);
+    });
 
     /* Saves the name and closes the welcome dialog. */
     function finishWelcome(name) {
@@ -3158,6 +3187,7 @@
       ui.folderId = rootFolders()[0] ? rootFolders()[0].id : null;
       showView('dashboard');
       maybeShowWelcome();
+      maybeShowGradesAnnouncement();
       scheduleDonateBanner();
       scheduleBackupBanner();
       setInterval(tickClassCountdowns, 1000);   // live class countdowns
